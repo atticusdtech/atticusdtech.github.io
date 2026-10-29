@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Letting an AI agent run sudo · Atticus Deutsch</title>
 <meta name="description" content="pane-run: a small script that opens a herdr pane for the password prompt, so an AI coding agent can run sudo and ssh -t without ever seeing the password.">
-<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="../style.css">
 </head>
 <body>
 <div class="wrap post">
-  <a class="back" href="/">← Atticus Deutsch</a>
+  <a class="back" href="../index.html">← Atticus Deutsch</a>
   <p class="meta">October 29, 2026</p>
   <h1>Letting an AI agent run sudo without ever seeing the password</h1>
 
@@ -50,7 +50,7 @@
 
   <h2>The script</h2>
 
-  <p>It's about 60 lines of Bash and needs herdr and <code>jq</code>. <a href="/pane-run">Download it</a>, put it on your <code>PATH</code>, and tell your agent when to use it.</p>
+  <p>It's about 60 lines of Bash and needs herdr and <code>jq</code>. <a href="../pane-run">Download it</a>, put it on your <code>PATH</code>, and tell your agent when to use it.</p>
 
 <pre><code>#!/bin/bash
 # Run a command that needs a human at the keyboard (sudo, ssh -t, password
@@ -112,7 +112,7 @@ exit $rc</code></pre>
 
   <p>Scripted root work that has to run unattended still belongs in a proper tool, such as an MDM policy. This script is for the moments when a person is at the keyboard anyway, and the only thing missing was a place to type.</p>
 
-  <footer>© 2026 Atticus Deutsch · <a href="/">Home</a></footer>
+  <footer>© 2026 Atticus Deutsch · <a href="../index.html">Home</a></footer>
 </div>
 </body>
 </html>
