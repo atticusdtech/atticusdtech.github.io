@@ -49,3 +49,6 @@ pre code { background: none; padding: 0; font-size: inherit; }
 .meta { font: 13px/1.4 var(--mono); color: var(--muted); margin: 0 0 8px; }
 .back { font: 14px/1 var(--mono); text-decoration: none; display: inline-block; margin-bottom: 28px; }
 footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--rule); font: 13px/1.5 var(--mono); color: var(--muted); }
+.id { display: flex; align-items: center; gap: 14px; margin: 0 0 14px; }
+.id .kicker { margin: 0; }
+.avatar { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 1px solid var(--rule); }
