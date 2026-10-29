@@ -1,0 +1,57 @@
+#!/bin/bash
+# Run a command that needs a human at the keyboard (sudo, ssh -t, password
+# prompts) in a new herdr pane beside the calling Claude pane. You type
+# into that pane; this waits for the command to finish, prints its output and
+# exit code, then closes the pane. Only works from inside herdr.
+#   pane-run [--timeout <sec>] [--keep] <command>
+# Default timeout 540 s (under Claude's 10-minute Bash cap). --keep leaves the
+# pane open afterwards. Never send a password into the pane from here.
+herdr=${HERDR_BIN_PATH:-herdr}
+timeout=540 keep=
+while [ $# -gt 0 ]; do
+  case $1 in
+    --timeout) timeout=$2; shift 2 ;;
+    --keep) keep=1; shift ;;
+    --) shift; break ;;
+    *) break ;;
+  esac
+done
+[ $# -gt 0 ] || { echo "usage: pane-run [--timeout <sec>] [--keep] <command>" >&2; exit 2; }
+[ "${HERDR_ENV:-}" = 1 ] || { echo "pane-run: not inside herdr" >&2; exit 2; }
+cmd="$*"
+
+# Split right if the pane is wide (cells are ~2:1), otherwise down.
+read -r w h < <("$herdr" pane layout --pane "$HERDR_PANE_ID" |
+  jq -r --arg p "$HERDR_PANE_ID" '.result.layout.panes[] | select(.pane_id==$p) | "\(.rect.width) \(.rect.height)"')
+dir=down; [ "${w:-0}" -ge $(( ${h:-0} * 5 / 2 )) ] && dir=right
+
+# Open unfocused, so keys you are typing don't land in the new shell before
+# the command does; focus it only once the command is running.
+pane=$("$herdr" pane split --current --direction "$dir" --cwd "$PWD" --no-focus | jq -r '.result.pane.pane_id')
+[ -n "$pane" ] && [ "$pane" != null ] || { echo "pane-run: split failed" >&2; exit 1; }
+"$herdr" pane rename "$pane" "type here: $cmd" >/dev/null 2>&1
+
+# The marker is assembled by printf so the typed command line can't match it.
+tag="PANE_RUN_$$_$RANDOM"
+"$herdr" pane wait-output "$pane" --regex '[%$#>] *$' --source visible --timeout 5000 >/dev/null 2>&1 || sleep 1
+"$herdr" pane send-keys "$pane" C-u >/dev/null 2>&1
+"$herdr" pane run "$pane" "$cmd; printf '\n%s_END rc=%s\n' $tag \$?" >/dev/null
+"$herdr" pane focus --current --direction "$dir" >/dev/null 2>&1
+
+if ! "$herdr" pane wait-output "$pane" --regex "${tag}_END rc=[0-9]+" \
+     --source recent-unwrapped --timeout $(( timeout * 1000 )) >/dev/null 2>&1; then
+  echo "pane-run: no finish after ${timeout}s; pane $pane left open" >&2
+  "$herdr" pane read "$pane" --source recent-unwrapped --lines 60
+  exit 124
+fi
+
+out=$("$herdr" pane read "$pane" --source recent-unwrapped --lines 400)
+# Print from the command line down to the marker; the exit code becomes ours.
+printf '%s\n' "$out" | awk -v t="$tag" '
+  index($0, t "_END rc=") == 1 { split($0, a, "rc="); rc = a[2]; exit }
+  index($0, t) { on = 1; next }
+  on { print }
+  END { exit rc + 0 }'
+rc=$?
+[ -n "$keep" ] || "$herdr" pane close "$pane" >/dev/null 2>&1
+exit $rc

@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Letting an AI agent run sudo · Atticus Deutsch</title>
+<meta name="description" content="pane-run: a small script that opens a herdr pane for the password prompt, so an AI coding agent can run sudo and ssh -t without ever seeing the password.">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="wrap post">
+  <a class="back" href="/">← Atticus Deutsch</a>
+  <p class="meta">October 29, 2026</p>
+  <h1>Letting an AI agent run sudo without ever seeing the password</h1>
+
+  <p>I do most of my admin work with Claude Code running in <a href="https://github.com/herdrdev/herdr">herdr</a>. The agent reads the MDM API, checks a Mac over SSH, and drafts the fix. Then it gets to a step that needs root and stops.</p>
+
+  <p>The reason is simple. The agent's shell has no TTY. When <code>sudo</code> or <code>ssh -t</code> asks for a password, nothing can answer, and the command hangs or fails. The usual workaround is for the agent to print a command and ask me to paste it into another terminal. Then I copy the output back. That is slow, and it breaks the loop: the agent no longer sees the result directly, so it can't react to it.</p>
+
+  <p>I didn't want to give the agent the password, either. Passwords shouldn't sit in a chat transcript, an environment variable, or a config file the agent can read.</p>
+
+  <h2>The idea</h2>
+
+  <p>herdr has a CLI that agents can use to split panes, send commands, and wait for output. So the agent can open a real terminal next to itself, run the command there, and let me type the password into that pane. When the command finishes, the agent reads the output and the exit code and closes the pane.</p>
+
+  <p>From the agent's side it is one blocking call:</p>
+
+<pre><code>pane-run 'ssh -t admin@10.0.0.42 "sudo softwareupdate -l &amp;&amp; sudo profiles show"'</code></pre>
+
+  <p>From my side, a pane slides open titled <code>type here: ssh -t …</code>, I type the password at the prompt, and the pane disappears when the command is done. The agent never sees the password. It sees the command's output and whether it succeeded.</p>
+
+  <h2>How it works</h2>
+
+  <ul>
+    <li><strong>Split, but don't steal focus.</strong> The pane opens with <code>--no-focus</code> and only takes focus once the command is running. Otherwise, whatever I'm typing at that moment lands in a fresh shell.</li>
+    <li><strong>Pick a direction.</strong> It splits right if the agent's pane is wide (terminal cells are about 2:1) and down if it isn't.</li>
+    <li><strong>Mark the end.</strong> After the command, it prints a random marker with the exit code. The marker is built with <code>printf</code>, so the command line echoed in the pane can't match it by accident.</li>
+    <li><strong>Wait, then read.</strong> <code>herdr pane wait-output</code> blocks until the marker appears. The script then reads the pane's scrollback, keeps everything between the command and the marker, and exits with the command's exit code.</li>
+    <li><strong>Time out cleanly.</strong> The default timeout is 540 seconds, under Claude Code's 10-minute limit on a shell call. On a timeout, the pane stays open and the script prints what it saw so far.</li>
+  </ul>
+
+  <h2>Rules I gave the agent</h2>
+
+  <ul>
+    <li>Never type a password into the pane with <code>send-keys</code> or <code>send-text</code>, and never ask for one in chat.</li>
+    <li>Say that a pane is about to open before opening one.</li>
+    <li>Put several sudo steps in one <code>ssh -t</code> call, joined with <code>&amp;&amp;</code>. With <code>;</code>, a wrong password can still come back as exit code 0.</li>
+    <li>Outside herdr, fall back to handing me the command.</li>
+  </ul>
+
+  <h2>The script</h2>
+
+  <p>It's about 60 lines of Bash and needs herdr and <code>jq</code>. <a href="/pane-run">Download it</a>, put it on your <code>PATH</code>, and tell your agent when to use it.</p>
+
+<pre><code>#!/bin/bash
+# Run a command that needs a human at the keyboard (sudo, ssh -t, password
+# prompts) in a new herdr pane beside the calling Claude pane. You type
+# into that pane; this waits for the command to finish, prints its output and
+# exit code, then closes the pane. Only works from inside herdr.
+#   pane-run [--timeout &lt;sec&gt;] [--keep] &lt;command&gt;
+# Default timeout 540 s (under Claude's 10-minute Bash cap). --keep leaves the
+# pane open afterwards. Never send a password into the pane from here.
+herdr=${HERDR_BIN_PATH:-herdr}
+timeout=540 keep=
+while [ $# -gt 0 ]; do
+  case $1 in
+    --timeout) timeout=$2; shift 2 ;;
+    --keep) keep=1; shift ;;
+    --) shift; break ;;
+    *) break ;;
+  esac
+done
+[ $# -gt 0 ] || { echo "usage: pane-run [--timeout &lt;sec&gt;] [--keep] &lt;command&gt;" &gt;&amp;2; exit 2; }
+[ "${HERDR_ENV:-}" = 1 ] || { echo "pane-run: not inside herdr" &gt;&amp;2; exit 2; }
+cmd="$*"
+
+# Split right if the pane is wide (cells are ~2:1), otherwise down.
+read -r w h &lt; &lt;("$herdr" pane layout --pane "$HERDR_PANE_ID" |
+  jq -r --arg p "$HERDR_PANE_ID" '.result.layout.panes[] | select(.pane_id==$p) | "\(.rect.width) \(.rect.height)"')
+dir=down; [ "${w:-0}" -ge $(( ${h:-0} * 5 / 2 )) ] &amp;&amp; dir=right
+
+# Open unfocused, so keys you are typing don't land in the new shell before
+# the command does; focus it only once the command is running.
+pane=$("$herdr" pane split --current --direction "$dir" --cwd "$PWD" --no-focus | jq -r '.result.pane.pane_id')
+[ -n "$pane" ] &amp;&amp; [ "$pane" != null ] || { echo "pane-run: split failed" &gt;&amp;2; exit 1; }
+"$herdr" pane rename "$pane" "type here: $cmd" &gt;/dev/null 2&gt;&amp;1
+
+# The marker is assembled by printf so the typed command line can't match it.
+tag="PANE_RUN_$$_$RANDOM"
+"$herdr" pane wait-output "$pane" --regex '[%$#&gt;] *$' --source visible --timeout 5000 &gt;/dev/null 2&gt;&amp;1 || sleep 1
+"$herdr" pane send-keys "$pane" C-u &gt;/dev/null 2&gt;&amp;1
+"$herdr" pane run "$pane" "$cmd; printf '\n%s_END rc=%s\n' $tag \$?" &gt;/dev/null
+"$herdr" pane focus --current --direction "$dir" &gt;/dev/null 2&gt;&amp;1
+
+if ! "$herdr" pane wait-output "$pane" --regex "${tag}_END rc=[0-9]+" \
+     --source recent-unwrapped --timeout $(( timeout * 1000 )) &gt;/dev/null 2&gt;&amp;1; then
+  echo "pane-run: no finish after ${timeout}s; pane $pane left open" &gt;&amp;2
+  "$herdr" pane read "$pane" --source recent-unwrapped --lines 60
+  exit 124
+fi
+
+out=$("$herdr" pane read "$pane" --source recent-unwrapped --lines 400)
+# Print from the command line down to the marker; the exit code becomes ours.
+printf '%s\n' "$out" | awk -v t="$tag" '
+  index($0, t "_END rc=") == 1 { split($0, a, "rc="); rc = a[2]; exit }
+  index($0, t) { on = 1; next }
+  on { print }
+  END { exit rc + 0 }'
+rc=$?
+[ -n "$keep" ] || "$herdr" pane close "$pane" &gt;/dev/null 2&gt;&amp;1
+exit $rc</code></pre>
+
+  <p>Scripted root work that has to run unattended still belongs in a proper tool, such as an MDM policy. This script is for the moments when a person is at the keyboard anyway, and the only thing missing was a place to type.</p>
+
+  <footer>© 2026 Atticus Deutsch · <a href="/">Home</a></footer>
+</div>
+</body>
+</html>
