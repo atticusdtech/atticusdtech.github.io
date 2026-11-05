@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Help desk by the numbers · Atticus Deutsch</title>
+<meta name="description" content="Response times, resolution times, SLA compliance and ticket volume from a working school help desk, run with an AI agent.">
+<link rel="stylesheet" href="style.css">
+<style>
+:root {
+  --q0: #ece9e2; --q1: #c4e0d5; --q2: #86c0aa; --q3: #3f8f77; --q4: #1f6f5c;
+  --bar: #1f6f5c; --bar-muted: #b9d6cb;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --q0: #22231f; --q1: #1f4a3e; --q2: #2e7a64; --q3: #4fae90; --q4: #8fdcc3;
+    --bar: #6cc3a8; --bar-muted: #2c5a4c;
+  }
+}
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; margin: 8px 0 0; }
+.tile { background: var(--bg); padding: 16px 16px 14px; }
+.tile .v { font-size: 1.9rem; font-weight: 650; letter-spacing: -.02em; line-height: 1.1; }
+.tile .v small { font-size: .95rem; font-weight: 500; color: var(--muted); margin-left: 2px; }
+.tile .l { font-size: .85rem; color: var(--muted); margin-top: 4px; line-height: 1.35; }
+.note { font-size: .92rem; color: var(--muted); }
+figure { margin: 18px 0 8px; }
+figcaption { font-size: .92rem; color: var(--muted); margin-top: 8px; }
+/* heatmap */
+.heat { display: grid; grid-template-columns: 28px 1fr; gap: 6px; }
+.heat .days { display: grid; grid-template-rows: 14px repeat(5, 1fr); gap: 3px; font: 11px/1 var(--mono); color: var(--muted); }
+.heat .days span { display: flex; align-items: center; }
+.heat .grid { display: grid; grid-auto-flow: column; grid-template-rows: 14px repeat(5, auto); gap: 3px; }
+.heat .mo { font: 11px/14px var(--mono); color: var(--muted); white-space: nowrap; overflow: visible; }
+.cell { aspect-ratio: 1; border-radius: 3px; background: var(--q0); min-width: 9px; }
+.cell[data-q="1"] { background: var(--q1); } .cell[data-q="2"] { background: var(--q2); }
+.cell[data-q="3"] { background: var(--q3); } .cell[data-q="4"] { background: var(--q4); }
+.cell.future { background: transparent; }
+.legend { display: flex; align-items: center; gap: 4px; justify-content: flex-end; font: 11px/1 var(--mono); color: var(--muted); margin-top: 8px; }
+.legend .cell { width: 11px; min-width: 11px; }
+/* bars */
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+@media (max-width: 560px) { .pair { grid-template-columns: 1fr; } }
+.chart-title { font-size: .95rem; font-weight: 600; margin: 0 0 10px; }
+.cols { display: flex; align-items: flex-end; gap: 10px; height: 150px; border-bottom: 1px solid var(--rule); }
+.col { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; position: relative; }
+.col .b { width: 100%; max-width: 44px; background: var(--bar); border-radius: 4px 4px 0 0; }
+.col .b.partial { background: var(--bar-muted); }
+.col .val { font: 12px/1 var(--mono); color: var(--fg); margin-bottom: 5px; }
+.xl { display: flex; gap: 10px; margin-top: 6px; }
+.xl span { flex: 1; text-align: center; font: 11px/1.2 var(--mono); color: var(--muted); }
+.cols.dense { gap: 4px; }
+.xl.dense { gap: 4px; }
+.hbars { display: grid; grid-template-columns: max-content 1fr; gap: 6px 12px; align-items: center; }
+.hbars .n { font-size: .9rem; }
+.hbars .track { display: flex; align-items: center; gap: 8px; }
+.hbars .b { height: 14px; background: var(--bar); border-radius: 0 4px 4px 0; }
+.hbars .v { font: 12px/1 var(--mono); color: var(--muted); }
+#tip { position: fixed; pointer-events: none; background: var(--fg); color: var(--bg); font: 12px/1.35 var(--mono); padding: 6px 9px; border-radius: 6px; opacity: 0; transition: opacity .08s; z-index: 10; white-space: nowrap; }
+[data-tip] { cursor: default; }
+table.data { border-collapse: collapse; width: 100%; font-size: .9rem; margin-top: 10px; }
+table.data th, table.data td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--rule); }
+table.data td.num, table.data th.num { text-align: right; font-family: var(--mono); }
+details summary { cursor: pointer; font: 13px/1.4 var(--mono); color: var(--accent); margin-top: 10px; }
+</style>
+</head>
+<body>
+<div class="wrap post">
+  <a class="back" href="index.html">← Atticus Deutsch</a>
+  <p class="meta">Updated <span id="updated"></span></p>
+  <h1>Help desk by the numbers</h1>
+
+  <p>I work the IT help desk at a school. Software engineers can point to a commit graph. Help desk work also leaves a record: every ticket logs when it came in, when someone first answered, and when it was fixed. These numbers come from that record, pulled from the ticketing system's API. They cover only tickets assigned to me, and they include no names or ticket details.</p>
+
+  <p>Most of my replies are drafted with an AI agent (Claude), which I review and send. The agent also does much of the lookup work: MDM records, directory accounts, device logs. The speed below is the result of that workflow.</p>
+
+  <h2>This school year</h2>
+  <div class="tiles">
+    <div class="tile"><div class="v">24<small>min</small></div><div class="l">Median time to first response</div></div>
+    <div class="tile"><div class="v">3.7<small>hrs</small></div><div class="l">Median time to resolve</div></div>
+    <div class="tile"><div class="v">97.9<small>%</small></div><div class="l">Tickets that never tripped an SLA rule</div></div>
+    <div class="tile"><div class="v">60<small>%</small></div><div class="l">Resolved within one school day</div></div>
+  </div>
+  <p class="note">August 1 to <span class="asof"></span>, 193 tickets from staff. Times are business hours as the ticketing system counts them. Tickets I opened for myself and automatic printer-supply alerts are left out of the time figures.</p>
+
+  <h2>Tickets resolved</h2>
+  <figure>
+    <div class="heat"><div class="days"><span></span><span>Mon</span><span></span><span>Wed</span><span></span><span>Fri</span></div><div class="grid" id="heat"></div></div>
+    <div class="legend">Less <span class="cell"></span><span class="cell" data-q="1"></span><span class="cell" data-q="2"></span><span class="cell" data-q="3"></span><span class="cell" data-q="4"></span> More</div>
+    <figcaption>One square per school day since I started in June. Weekends are left off. The busiest day so far closed 11 tickets.</figcaption>
+  </figure>
+
+  <h2>Getting faster</h2>
+  <div class="pair">
+    <figure>
+      <p class="chart-title">Median time to resolve, hours</p>
+      <div class="cols" id="res"></div><div class="xl" id="res-x"></div>
+    </figure>
+    <figure>
+      <p class="chart-title">Tickets per month</p>
+      <div class="cols" id="vol"></div><div class="xl" id="vol-x"></div>
+    </figure>
+  </div>
+  <p class="note">October was the busiest month and also the fastest. November is in progress, so its bar is muted.</p>
+  <details><summary>Show as a table</summary>
+    <table class="data" id="month-table"><thead><tr><th>Month</th><th class="num">Tickets</th><th class="num">Median to resolve</th></tr></thead><tbody></tbody></table>
+  </details>
+
+  <h2>What comes in</h2>
+  <figure>
+    <div class="hbars" id="cats"></div>
+    <figcaption>All 291 tickets assigned to me, by category. Printing alone is over a quarter of the job.</figcaption>
+  </figure>
+
+  <figure>
+    <p class="chart-title">When requests arrive</p>
+    <div class="cols dense" id="hours"></div><div class="xl dense" id="hours-x"></div>
+    <figcaption>Tickets opened by hour of day. The 10 o'clock hour is the peak.</figcaption>
+  </figure>
+
+  <h2>How the numbers are made</h2>
+  <p>The ticketing system records first response, assignment and resolution times on every ticket, in business hours. A script pulls my tickets through its API and computes medians and shares. It publishes only the totals on this page.</p>
+  <p>The help desk has two SLA rules, and both are alarms rather than targets. One escalates a ticket that sits unassigned for two hours, the other a ticket that goes two days without a comment. The compliance figure is the share of tickets that never tripped either.</p>
+  <p>Summer is left out of the headline figures. In June and July I inherited a backlog of older tickets, and those times reflect the backlog, not the work.</p>
+
+  <footer>© 2026 Atticus Deutsch</footer>
+</div>
+<div id="tip" role="tooltip"></div>
+<script>
+const DATA = {"generated":"2026-11-05","daily":{"2026-07-02":2,"2026-07-06":1,"2026-07-08":3,"2026-07-13":1,"2026-07-20":2,"2026-07-21":4,"2026-07-22":1,"2026-07-23":1,"2026-08-03":3,"2026-08-10":6,"2026-08-12":1,"2026-08-13":1,"2026-08-17":1,"2026-08-18":4,"2026-08-20":2,"2026-08-21":1,"2026-08-25":2,"2026-08-26":6,"2026-08-27":4,"2026-08-28":5,"2026-08-31":6,"2026-09-01":5,"2026-09-02":2,"2026-09-03":3,"2026-09-04":4,"2026-09-08":6,"2026-09-09":5,"2026-09-10":3,"2026-09-14":2,"2026-09-15":3,"2026-09-16":7,"2026-09-17":3,"2026-09-18":4,"2026-09-22":5,"2026-09-23":1,"2026-09-24":1,"2026-09-25":5,"2026-09-28":4,"2026-09-29":2,"2026-09-30":8,"2026-10-01":1,"2026-10-02":4,"2026-10-05":9,"2026-10-06":3,"2026-10-07":1,"2026-10-08":6,"2026-10-09":6,"2026-10-12":1,"2026-10-13":11,"2026-10-14":8,"2026-10-15":5,"2026-10-16":1,"2026-10-19":4,"2026-10-20":4,"2026-10-21":3,"2026-10-22":3,"2026-10-23":6,"2026-10-26":7,"2026-10-27":7,"2026-10-28":3,"2026-10-29":2,"2026-10-30":2,"2026-11-02":1,"2026-11-03":6,"2026-11-04":2,"2026-11-05":1},"months":[{"m":"2026-08","tickets":44,"res":526},{"m":"2026-09","tickets":82,"res":369},{"m":"2026-10","tickets":114,"res":87},{"m":"2026-11","tickets":22,"res":51}],"cats":[{"n":"Printing and copying","v":80},{"n":"Staff laptops","v":51},{"n":"Student Chromebooks","v":43},{"n":"Email","v":32},{"n":"Audio/visual","v":29},{"n":"Projects","v":18},{"n":"iPad","v":11},{"n":"Software","v":3}],"hours":[{"h":7,"v":12},{"h":8,"v":26},{"h":9,"v":23},{"h":10,"v":47},{"h":11,"v":18},{"h":12,"v":14},{"h":13,"v":14},{"h":14,"v":21},{"h":15,"v":9},{"h":16,"v":4}]};
+const $ = id => document.getElementById(id);
+const fmtDate = d => new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+$('updated').textContent = fmtDate(DATA.generated);
+document.querySelectorAll('.asof').forEach(e => e.textContent = fmtDate(DATA.generated).replace(/, \d{4}$/, ''));
+
+// tooltip
+const tip = $('tip');
+document.addEventListener('mouseover', e => { const t = e.target.closest('[data-tip]'); if (!t) return; tip.textContent = t.dataset.tip; tip.style.opacity = 1; });
+document.addEventListener('mousemove', e => {
+  if (tip.style.opacity !== '1') return;
+  const w = tip.offsetWidth, x = Math.min(e.clientX + 12, innerWidth - w - 8);
+  tip.style.left = x + 'px'; tip.style.top = (e.clientY - 34) + 'px';
+});
+document.addEventListener('mouseout', e => { if (e.target.closest('[data-tip]')) tip.style.opacity = 0; });
+
+// heatmap: Mon-Fri rows, one column per week
+(function () {
+  const start = new Date('2026-06-15T12:00:00'); // Monday of first week
+  const end = new Date(DATA.generated + 'T12:00:00');
+  const q = n => n === 0 ? 0 : n <= 2 ? 1 : n <= 4 ? 2 : n <= 7 ? 3 : 4;
+  const g = $('heat'); let lastMonth = -1; let weeks = 0;
+  for (let w = new Date(start); w <= end; w.setDate(w.getDate() + 7)) {
+    weeks++;
+    const lab = document.createElement('div'); lab.className = 'mo';
+    if (w.getMonth() !== lastMonth) { lab.textContent = w.toLocaleDateString('en-US', { month: 'short' }); lastMonth = w.getMonth(); }
+    g.appendChild(lab);
+    for (let d = 0; d < 5; d++) {
+      const day = new Date(w); day.setDate(w.getDate() + d);
+      const iso = day.toISOString().slice(0, 10);
+      const c = document.createElement('div'); c.className = 'cell';
+      if (day > end || day < new Date('2026-06-17T00:00:00')) { c.classList.add('future'); }
+      else {
+        const n = DATA.daily[iso] || 0; c.dataset.q = q(n);
+        c.dataset.tip = `${n} resolved · ${day.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}`;
+      }
+      g.appendChild(c);
+    }
+  }
+  g.style.gridTemplateColumns = `repeat(${weeks}, 1fr)`;
+})();
+
+// column charts
+function cols(el, xel, items, fmt, partialLast) {
+  const max = Math.max(...items.map(i => i.v));
+  items.forEach((it, i) => {
+    const col = document.createElement('div'); col.className = 'col'; col.dataset.tip = it.tip;
+    const val = document.createElement('div'); val.className = 'val'; val.textContent = it.label ?? fmt(it.v);
+    const b = document.createElement('div'); b.className = 'b' + (partialLast && i === items.length - 1 ? ' partial' : '');
+    b.style.height = Math.max(2, (it.v / max) * 118) + 'px';
+    col.append(val, b); el.appendChild(col);
+    const x = document.createElement('span'); x.textContent = it.x; xel.appendChild(x);
+  });
+}
+const mName = m => new Date(m + '-15T12:00:00').toLocaleDateString('en-US', { month: 'short' });
+const hrs = m => (m / 60).toFixed(1);
+cols($('res'), $('res-x'), DATA.months.map(m => ({ x: mName(m.m), v: m.res / 60, label: hrs(m.res), tip: `${mName(m.m)}: median ${hrs(m.res)} business hours` })), v => v, true);
+cols($('vol'), $('vol-x'), DATA.months.map(m => ({ x: mName(m.m), v: m.tickets, label: m.tickets, tip: `${mName(m.m)}: ${m.tickets} tickets` })), v => v, true);
+const hLab = h => (h % 12 || 12) + (h < 12 ? 'a' : 'p');
+cols($('hours'), $('hours-x'), DATA.hours.map(h => ({ x: hLab(h.h), v: h.v, label: '', tip: `${hLab(h.h)}m hour: ${h.v} tickets` })), v => v, false);
+const tb = document.querySelector('#month-table tbody');
+DATA.months.forEach(m => { tb.insertAdjacentHTML('beforeend', `<tr><td>${new Date(m.m + '-15T12:00:00').toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</td><td class="num">${m.tickets}</td><td class="num">${hrs(m.res)} hrs</td></tr>`); });
+
+// category bars
+(function () {
+  const el = $('cats'); const max = Math.max(...DATA.cats.map(c => c.v));
+  DATA.cats.forEach(c => {
+    el.insertAdjacentHTML('beforeend', `<div class="n">${c.n}</div><div class="track" data-tip="${c.n}: ${c.v} tickets"><div class="b" style="width:${(c.v / max) * 85}%"></div><span class="v">${c.v}</span></div>`);
+  });
+})();
+</script>
+</body>
+</html>
