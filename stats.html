@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Help desk by the numbers · Atticus Deutsch</title>
 <meta name="description" content="Response times, resolution times, SLA compliance and ticket volume from a working school help desk, run with an AI agent.">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=2">
 <style>
 :root {
   --q0: #ece9e2; --q1: #c4e0d5; --q2: #86c0aa; --q3: #3f8f77; --q4: #1f6f5c;
@@ -64,8 +64,18 @@ details summary { cursor: pointer; font: 13px/1.4 var(--mono); color: var(--acce
 </style>
 </head>
 <body>
-<div class="wrap post">
-  <a class="back" href="index.html">← Atticus Deutsch</a>
+<div class="layout">
+  <aside class="side">
+    <a class="me" href="index.html"><img class="avatar" src="avatar.jpg" alt="" width="64" height="64"><span><strong>Atticus Deutsch</strong><span class="tag">AI native system administration</span></span></a>
+    <nav class="nav"><a href="index.html">Home</a><a href="stats.html" aria-current="page">Help desk stats</a><a href="index.html#writing">Writing</a></nav>
+    <ul class="contacts">
+      <li><a href="mailto:atticus.d.tech@gmail.com">atticus.d.tech@gmail.com</a></li>
+      <li><a href="https://github.com/atticusdtech">GitHub</a></li>
+      <li><a href="https://www.linkedin.com/in/atticus-deutsch-537699102">LinkedIn</a></li>
+      <li><a href="https://x.com/atticusdtech">X</a></li>
+    </ul>
+  </aside>
+  <main class="main post wide">
   <p class="meta">Updated <span id="updated"></span></p>
   <h1>Help desk by the numbers</h1>
 
@@ -123,6 +133,7 @@ details summary { cursor: pointer; font: 13px/1.4 var(--mono); color: var(--acce
   <p>Summer is left out of the headline figures. In June and July I inherited a backlog of older tickets, and those times reflect the backlog, not the work.</p>
 
   <footer>© 2026 Atticus Deutsch</footer>
+</main>
 </div>
 <div id="tip" role="tooltip"></div>
 <script>
