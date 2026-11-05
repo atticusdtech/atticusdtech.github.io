@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Atticus Deutsch</title>
 <meta name="description" content="Atticus Deutsch: AI native system administration. Mac fleets, MDM, identity, and the scripts that hold it together.">
-<link rel="stylesheet" href="style.css?v=3">
+<link rel="stylesheet" href="style.css?v=4">
 </head>
 <body>
-<div class="layout">
+<div class="layout three">
   <aside class="side">
     <a class="me" href="index.html"><img class="avatar" src="avatar.jpg" alt="" width="64" height="64"><span><strong>Atticus Deutsch</strong><span class="tag">AI native system administration</span></span></a>
     <nav class="nav"><a href="index.html" aria-current="page">Home</a><a href="stats.html">Help desk stats</a><a href="index.html#writing">Writing</a></nav>
@@ -25,22 +25,6 @@
     <p class="lede">I'm a system administrator in Chicago. I run a school's Mac and iPad fleet with Jamf Pro and Apple School Manager, and I manage Google Workspace and Entra ID. Most of that work now runs through an AI agent that I supervise. I write here about the tools and habits that make that safe and fast.</p>
   </header>
 
-  <section class="today" aria-labelledby="today-h">
-    <div class="today-head">
-      <h2 id="today-h"><span class="pulse" aria-hidden="true"></span>Today</h2>
-      <time datetime="2026-11-05T15:10-06:00">Thursday, November 5 · updated 3:10 PM</time>
-    </div>
-    <p class="today-stats"><strong>55</strong> tickets worked · <strong>65</strong> replies written</p>
-    <ul class="today-log">
-      <li><strong>Found a silent bug in my own tooling.</strong> Replies my AI agent posted through the help desk API had not been emailing anyone for three weeks. I fixed the API call, confirmed delivery, and re-sent 36 missed replies with an apology.</li>
-      <li><strong>Pushed a new local admin password to the Mac fleet</strong> through Jamf Pro. 167 of 259 Macs had it within a day. The rest pick it up at their next check-in, and the old broken policy is gone.</li>
-      <li><strong>Fixed a teacher's printing remotely.</strong> Their screenshot pointed to a bad printer setup, so I connected to the laptop and rebuilt it without a visit.</li>
-      <li><strong>Traced a "printer error" to a full disk.</strong> The Mac had no free space to prepare the job, so reinstalling the printer was never going to help.</li>
-      <li><strong>Tested classroom Apple TV audio</strong> end to end, found it was a laptop sound setting, and closed it out once the teacher confirmed.</li>
-      <li><strong>Ran the student Chromebook desk.</strong> Logged new breaks with loaners and sent pickup notices for repaired and replaced devices.</li>
-      <li><strong>Built this site's <a href="stats.html">help desk stats page</a></strong> from the ticketing API.</li>
-    </ul>
-  </section>
 
   <h2>Work</h2>
   <ul class="posts">
@@ -61,6 +45,24 @@
 
   <footer>© 2026 Atticus Deutsch</footer>
 </main>
+  <aside class="rail">
+<section class="today" aria-labelledby="today-h">
+      <div class="today-head">
+        <h2 id="today-h"><span class="pulse" aria-hidden="true"></span>Today</h2>
+        <time datetime="2026-11-05T15:10-06:00">Thursday, November 5 · updated 3:10 PM</time>
+      </div>
+      <p class="today-stats"><strong>55</strong> tickets worked · <strong>65</strong> replies written</p>
+      <ul class="today-log">
+        <li><strong>Found a silent bug in my own tooling.</strong> Replies my AI agent posted through the help desk API had not been emailing anyone for three weeks. I fixed the API call, confirmed delivery, and re-sent 36 missed replies with an apology.</li>
+        <li><strong>Pushed a new local admin password to the Mac fleet</strong> through Jamf Pro. 167 of 259 Macs had it within a day. The rest pick it up at their next check-in, and the old broken policy is gone.</li>
+        <li><strong>Fixed a teacher's printing remotely.</strong> Their screenshot pointed to a bad printer setup, so I connected to the laptop and rebuilt it without a visit.</li>
+        <li><strong>Traced a "printer error" to a full disk.</strong> The Mac had no free space to prepare the job, so reinstalling the printer was never going to help.</li>
+        <li><strong>Tested classroom Apple TV audio</strong> end to end, found it was a laptop sound setting, and closed it out once the teacher confirmed.</li>
+        <li><strong>Ran the student Chromebook desk.</strong> Logged new breaks with loaners and sent pickup notices for repaired and replaced devices.</li>
+        <li><strong>Built this site's <a href="stats.html">help desk stats page</a></strong> from the ticketing API.</li>
+      </ul>
+    </section>
+  </aside>
 </div>
 </body>
 </html>

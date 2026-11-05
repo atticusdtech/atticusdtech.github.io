@@ -86,3 +86,24 @@ footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--rule);
 .today-log { margin: 0; padding-left: 18px; font-size: .95rem; }
 .today-log li { margin: 0 0 8px; }
 .today-log li::marker { color: var(--accent); }
+
+/* three-column layout: sidebar | content | Today rail */
+.layout.three { display: flex; flex-direction: column; }
+.layout.three .side { order: 0; }
+.layout.three .rail { order: 1; }
+.layout.three .main { order: 2; }
+.rail .today { margin: 0 0 32px; }
+@media (min-width: 900px) {
+  .layout.three { display: grid; grid-template-columns: 220px minmax(0, 1fr); column-gap: 72px; }
+  .layout.three .side { grid-column: 1; grid-row: 1 / span 2; }
+  .layout.three .main { grid-column: 2; grid-row: 2; }
+  .layout.three .rail { grid-column: 2; grid-row: 1; }
+}
+@media (min-width: 1240px) {
+  .layout.three { max-width: 1400px; grid-template-columns: 200px minmax(0, 1fr) 320px; column-gap: 56px; }
+  .layout.three .side { grid-row: 1; }
+  .layout.three .main { grid-column: 2; grid-row: 1; }
+  .layout.three .rail { grid-column: 3; grid-row: 1; position: sticky; top: 64px; align-self: start; }
+  .rail .today { padding: 18px; }
+  .rail .today-log { font-size: .88rem; }
+}
