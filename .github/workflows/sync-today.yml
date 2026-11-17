@@ -1,0 +1,63 @@
+name: Sync today's help desk log
+
+on:
+  schedule:
+    # ~4:30pm Central on school days. GitHub cron is UTC and does not shift
+    # for daylight saving, so this drifts an hour in summer; fine for a
+    # once-a-day personal-site digest.
+    - cron: "30 22 * * 1-5"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r scripts/requirements.txt
+
+      - name: Get Anthropic identity token
+        id: idtoken
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const token = await core.getIDToken('https://api.anthropic.com');
+            core.setSecret(token);
+            core.setOutput('token', token);
+
+      - name: Generate today's log
+        id: sync
+        env:
+          SOLARWINDS_API_TOKEN: ${{ secrets.SOLARWINDS_API_TOKEN }}
+          ANTHROPIC_IDENTITY_TOKEN: ${{ steps.idtoken.outputs.token }}
+          ANTHROPIC_FEDERATION_RULE_ID: fdrl_01KiJjwjpgcAnssYCBgQT8xE
+          ANTHROPIC_ORGANIZATION_ID: 7108188c-f679-4c51-8727-8968b5a5e974
+          ANTHROPIC_SERVICE_ACCOUNT_ID: svac_017FmquwmUgZ7WrYcZf5xPW3
+        run: python scripts/sync_today.py
+
+      - name: Open PR with today's update
+        if: steps.sync.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "atticusdtech"
+          git config user.email "43195508+afd998@users.noreply.github.com"
+          branch="today-sync-$(date -u +%Y%m%d-%H%M)"
+          git checkout -b "$branch"
+          git add index.html
+          git commit -m "Today: ${{ steps.sync.outputs.count }} ticket(s) resolved ($(date -u +%Y-%m-%d))"
+          git push origin "$branch"
+          gh pr create \
+            --title "Today's log: $(date -u +%Y-%m-%d)" \
+            --body "Auto-generated from tickets resolved today, summarized and scrubbed of anything school- or person-identifying. Review before merging." \
+            --base main --head "$branch"
