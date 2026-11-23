@@ -108,33 +108,12 @@ footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--rule);
   .rail .today-log { font-size: .88rem; }
 }
 
-/* ITIL operations rail (rendered by ops.js from data/ops.json) */
-:root { --warn: #9a5b00; --warn-bg: #f6ead6; --ok-bg: #dcece6; --info: #2f5d8a; --info-bg: #e2eaf3; }
-@media (prefers-color-scheme: dark) {
-  :root { --warn: #e6b366; --warn-bg: #3a2e1c; --ok-bg: #1d3a31; --info: #8fb8e0; --info-bg: #1e2c3a; }
-}
-.ops-lane { border-top: 1px solid var(--rule); margin-top: 14px; padding-top: 12px; }
-.ops-lane h3 { margin: 0 0 8px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 2px 10px;
-  font: 600 11px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--fg); }
-.ops-sum { font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--muted); }
-.ops-sum strong { color: var(--fg); }
-.ops-list { list-style: none; margin: 0; padding: 0; }
-.ops-list li { margin: 0 0 10px; }
-.ops-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.ops-id { font: 11px/1.4 var(--mono); color: var(--muted); }
-.ops-pill { font: 600 10.5px/1 var(--mono); padding: 3px 7px; border-radius: 999px; white-space: nowrap; color: var(--muted); background: var(--bg); border: 1px solid var(--rule); }
-.ops-pill[data-s="investigating"], .ops-pill[data-s="known_error"] { color: var(--warn); background: var(--warn-bg); border-color: transparent; }
-.ops-pill[data-s="fix_in_change"], .ops-pill[data-s="in_progress"], .ops-pill[data-s="scheduled"] { color: var(--info); background: var(--info-bg); border-color: transparent; }
-.ops-pill[data-s="resolved"], .ops-pill[data-s="completed"] { color: var(--accent); background: var(--ok-bg); border-color: transparent; }
-.ops-title { font-size: .9rem; line-height: 1.4; margin-top: 2px; }
-.ops-meta { font: 11.5px/1.4 var(--mono); color: var(--muted); margin-top: 2px; }
-.ops-bar { height: 4px; border-radius: 2px; background: var(--rule); margin: 6px 0 4px; overflow: hidden; }
-.ops-bar i { display: block; height: 100%; background: var(--accent); }
-.ops-quiet { margin: 0; font-size: .88rem; color: var(--muted); }
-.ops-more summary, .ops-key summary { cursor: pointer; font: 11.5px/1.4 var(--mono); color: var(--accent); margin-bottom: 8px; }
-.ops-key { border-top: 1px solid var(--rule); margin-top: 6px; padding-top: 10px; }
-.ops-key p { margin: 0; font-size: .82rem; line-height: 1.5; color: var(--muted); }
-.ops .today-log { font-size: .88rem; }
-@media (min-width: 1240px) {
-  .layout.three .rail { max-height: calc(100vh - 88px); overflow-y: auto; scrollbar-width: thin; border-radius: 12px; }
-}
+/* "Now" rail (rendered by ops.js from data/ops.json) */
+.now h3 { margin: 18px 0 8px; font: 600 11px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.now-list { list-style: none; margin: 0; padding: 0; }
+.now-list li { position: relative; padding-left: 16px; margin: 0 0 10px; }
+.now-list li::before { content: ""; position: absolute; left: 0; top: .55em; width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid var(--accent); }
+.now-list li[data-s="in_progress"]::before, .now-list li[data-s="done"]::before { background: var(--accent); }
+.now-title { display: block; font-size: .92rem; line-height: 1.4; }
+.now-meta { display: block; font: 11.5px/1.4 var(--mono); color: var(--muted); }
+.now-more { margin: 0; font: 11.5px/1.4 var(--mono); color: var(--muted); }

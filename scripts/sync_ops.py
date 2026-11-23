@@ -1,13 +1,10 @@
 #!/usr/bin/env python3
-"""Regenerate data/ops.json, the ITIL operations rail on the site.
+"""Regenerate data/ops.json, the rail on the site.
 
-Pulls my incidents, problems, changes and releases from SolarWinds Service
-Desk, scrubs anything that could identify the school or a person, asks Claude
-to rewrite record titles and today's resolved incidents into public-safe
-plain language, and writes the result to data/ops.json. ops.js renders it on
-every page.
-
-Only records assigned to my assignee group are published. Rewritten titles
+Publishes two things from SolarWinds Service Desk: my open changes and the
+knowledge-base solutions I've written. Titles are redacted, then Claude
+rewrites them into short public-safe wording. ops.js renders the JSON on
+every page. Nothing about incidents or open ticket counts is published. Rewritten titles
 are cached in the JSON by record and a hash of the source title, so a record
 keeps the same public wording until its real title changes.
 
@@ -33,12 +30,10 @@ import requests
 SCHOOL_TZ = ZoneInfo("America/Chicago")
 API = "https://api.samanage.com"
 MY_GROUP_ID = 16556132  # my personal assignee group in Service Desk
+MY_USER_ID = 15057749   # my user record (solution author)
 MODEL = "claude-haiku-5-5"
-MAX_LOG = 6           # incident bullets shown for today
-CHANGE_WINDOW = 7     # days a completed change stays on the rail
+MAX_ITEMS = 5
 OPS_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "ops.json")
-
-DONE_INCIDENT = {"Resolved", "Closed"}
 
 # --- redaction, applied before anything leaves this machine for Claude ---
 EMAIL_RE = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
@@ -107,17 +102,6 @@ def ids(rec, key):
 
 # --- state mapping into plain ITIL lifecycle words -------------------------
 
-def problem_state(p):
-    s = (p.get("state") or "").lower()
-    if s in ("closed", "resolved"):
-        return "resolved"
-    if "change" in s:
-        return "fix_in_change"
-    if redact(p.get("root_cause")) and redact(p.get("workaround")):
-        return "known_error"
-    return "investigating"
-
-
 def change_state(c, now):
     s = (c.get("state") or "").lower()
     if "completed" in s:
@@ -134,45 +118,22 @@ def change_state(c, now):
     return "planned"
 
 
-def release_state(r):
-    s = (r.get("state") or "").lower()
-    return "done" if ("closed" in s or "completed" in s) else "open"
-
-
 # --- Claude rewrites -------------------------------------------------------
 
-TITLE_PROMPT = """You rewrite an internal IT service-management record title for \
-a school IT administrator's public portfolio site. The reader is a peer IT pro.
+TITLE_PROMPT = """You shorten an internal IT record title for a school IT \
+administrator's public portfolio site. The reader is a peer IT pro.
 
 Rules:
-- Never include a person's name, room or building, student or staff identifier, \
-email address, internal mailbox name, phone number, or the school's name.
-- Drop internal object numbers (policy 756, profile 64, script 298).
-- Keep product names (Jamf Pro, Google Admin, Chromebook, macOS) and the technical gist.
-- Anything about student health, discipline, grades or other student records: \
-reply with {"title": null}.
-- 4-10 words, sentence case, no trailing period.
+- Stay faithful to the original title. Do not add facts, causes, device types \
+or numbers that are not in it.
+- Never include a person's name, room, building, mailbox or address, identifiers, \
+the school's name, vendor or internal system names other than Apple, Google, \
+Jamf, Microsoft and macOS/ChromeOS, or security specifics (keys, passwords, \
+network names, policy or profile numbers).
+- Anything about students' health, discipline, grades or records: reply {"title": null}.
+- 3-8 words, sentence case, no trailing period.
 
 Reply with ONLY a JSON object: {"title": "..."}"""
-
-INCIDENT_PROMPT = """You turn a K-12 school IT administrator's internal help-desk incident \
-into one changelog-style bullet for their personal portfolio site, written in their own \
-voice (first person, past tense, plain language, no jargon dump).
-
-Match this style exactly:
-  headline: "Fixed a teacher's printing remotely"
-  detail: "Their screenshot pointed to a bad printer setup, so I connected to the \
-laptop and rebuilt it without a visit."
-
-Rules:
-- Never include a person's name, job title tied to a person, room or building \
-identifier, student ID, email address, phone number, or the school's name.
-- If the notes don't have enough detail, write the most honest generic technical \
-description the category supports rather than inventing specifics.
-- headline: 3-7 words, no trailing period, states the action and result.
-- detail: one or two sentences, concrete about the technical work.
-
-Reply with ONLY a JSON object: {"headline": "...", "detail": "..."}"""
 
 
 def ask(client, system, user):
@@ -192,155 +153,64 @@ def ask(client, system, user):
 
 
 def public_title(client, cache, kind, rec):
-    """Return the cached public title, or ask Claude for a new one.
-
-    Returns None when Claude declines (sensitive record): the record is skipped.
-    """
-    raw = redact(rec.get("name"))
+    """Cached public title, or a new one from Claude. None = skip the record."""
+    raw = re.sub(r"^WHD-\d+\s*", "", redact(rec.get("name")))
     key = f"{kind}:{rec['number']}"
-    h = hashlib.sha256(raw.encode()).hexdigest()[:12]
+    h = hashlib.sha256((TITLE_PROMPT + raw).encode()).hexdigest()[:12]
     hit = cache.get(key)
     if hit and hit.get("h") == h:
         return hit.get("t")
-    detail = redact(rec.get("description_no_html") or rec.get("description"))[:600]
-    out = ask(client, TITLE_PROMPT, f"Record type: {kind}\nTitle: {raw}\nDescription: {detail}")
+    out = ask(client, TITLE_PROMPT, f"Record type: {kind}\nTitle: {raw}")
     title = (out.get("title") or "").strip() or None
     cache[key] = {"h": h, "t": title}
     return title
 
 
-def incident_bullet(client, t):
-    category = (t.get("category") or {}).get("name", "")
-    subcategory = (t.get("subcategory") or {}).get("name", "")
-    notes = redact(t.get("resolution_description") or t.get("description") or "")[:1500]
-    out = ask(client, INCIDENT_PROMPT, f"Category: {category}\nSubcategory: {subcategory}\nResolution notes: {notes}")
-    head, detail = (out.get("headline") or "").strip(), (out.get("detail") or "").strip()
-    return {"headline": head, "detail": detail} if head and detail else None
-
-
-# --- build -----------------------------------------------------------------
-
-def fetch(now):
-    today = now.date()
-    incidents = sd_all("incidents.json", {"assigned_to[]": MY_GROUP_ID, "sort_by": "updated_at", "sort_order": "DESC"})
-    problems = [p for p in sd_all("problems.json") if mine(p)]
+def fetch():
     changes = [c for c in sd_all("changes.json") if mine(c)]
-    releases = [r for r in sd_all("releases.json") if mine(r)]
-
-    resolved_today = [
-        t for t in incidents
-        if t.get("state") in DONE_INCIDENT and (local(t.get("updated_at")) or now).date() == today
+    solutions = [
+        s for s in sd_all("solutions.json", {"sort_by": "created_at", "sort_order": "DESC"}, max_pages=3)
+        if (s.get("requester") or {}).get("id") == MY_USER_ID and (s.get("state") or "").lower() == "approved"
     ]
-    open_count = sum(1 for t in incidents if t.get("state") not in DONE_INCIDENT)
-    return incidents, resolved_today, open_count, problems, changes, releases
+    return changes, solutions
 
 
-def build(client, cache, now, resolved_today, open_count, problems, changes, releases):
-    today = now.date()
-    window = today - timedelta(days=CHANGE_WINDOW)
-    num = {}  # Service Desk id -> public label, for cross-links
-
-    for p in problems:
-        num[p["id"]] = f"PRB-{p['number']}"
-    for c in changes:
-        num[c["id"]] = f"CHG-{c['number']}"
-    for r in releases:
-        num[r["id"]] = f"REL-{r['number']}"
-
-    out_p = []
-    for p in problems:
-        state = problem_state(p)
-        updated = local(p.get("updated_at"))
-        if state == "resolved" and (not updated or updated.date() < window):
-            continue
-        title = public_title(client, cache, "problem", p)
-        if not title:
-            continue
-        out_p.append({
-            "id": num[p["id"]],
-            "title": title,
-            "state": state,
-            "incidents": len(ids(p, "incidents")),
-            "changes": [num[i] for i in ids(p, "changes") if i in num],
-            "today": bool(updated and updated.date() == today),
-        })
-
-    out_c, change_by_id = [], {}
+def build(client, cache, now, changes, solutions):
+    out_c = []
     for c in changes:
         state = change_state(c, now)
-        updated = local(c.get("updated_at"))
-        change_by_id[c["id"]] = state
-        if state in ("completed", "cancelled", "rolled_back") and (not updated or updated.date() < window):
+        if state not in ("planned", "scheduled", "in_progress"):
             continue
         title = public_title(client, cache, "change", c)
         if not title:
             continue
         start = local(c.get("planned_start_at"))
-        out_c.append({
-            "id": num[c["id"]],
-            "title": title,
-            "state": state,
-            "type": (c.get("change_type") or "Normal") if c.get("change_type") not in (None, "None") else "Normal",
-            "fixes": [num[i] for i in ids(c, "problems") if i in num],
-            "incidents": len(ids(c, "incidents")),
-            "start": start.date().isoformat() if start else None,
-            "done": updated.date().isoformat() if state == "completed" and updated else None,
-            "today": bool(updated and updated.date() == today),
-        })
+        out_c.append({"title": title, "state": state, "start": start.date().isoformat() if start else None})
+    rank = {"in_progress": 0, "scheduled": 1, "planned": 2}
+    out_c.sort(key=lambda x: (rank[x["state"]], x["start"] or ""))
 
-    out_r = []
-    for r in releases:
-        if release_state(r) == "done":
-            continue
-        title = public_title(client, cache, "release", r)
-        if not title:
-            continue
-        linked = ids(r, "changes")
-        # changes linked to a release can belong to others; count what we can see
-        done = sum(1 for i in linked if change_by_id.get(i) == "completed")
-        out_r.append({
-            "id": num[r["id"]],
-            "title": title,
-            "changes_done": done,
-            "changes_total": len(linked),
-            "changes": [num[i] for i in linked if i in num],
-            "target": (local(r.get("planned_end_at") or r.get("due_at")) or now).date().isoformat()
-            if (r.get("planned_end_at") or r.get("due_at")) else None,
-        })
-
-    order_p = {"investigating": 0, "known_error": 1, "fix_in_change": 2, "resolved": 3}
-    out_p.sort(key=lambda x: (order_p[x["state"]], -x["incidents"]))
-    order_c = {"in_progress": 0, "scheduled": 1, "planned": 2, "completed": 3, "rolled_back": 4, "cancelled": 5}
-    out_c.sort(key=lambda x: (order_c[x["state"]], x["done"] or "", x["id"]), reverse=False)
-
-    log = []
-    for t in resolved_today:
-        if len(log) >= MAX_LOG:
-            break
-        b = incident_bullet(client, t)
-        if b:
-            log.append(b)
+    out_s = []
+    for s in solutions[:MAX_ITEMS]:
+        title = public_title(client, cache, "solution", s)
+        if title:
+            out_s.append({"title": title, "date": local(s["created_at"]).date().isoformat()})
 
     return {
         "updated": now.isoformat(timespec="minutes"),
-        "incidents": {"resolved_today": len(resolved_today), "open": open_count, "log": log},
-        "problems": out_p,
-        "changes": out_c,
-        "releases": out_r,
+        "changes": out_c[:MAX_ITEMS],
+        "changes_total": len(out_c),
+        "solutions": out_s,
         "_titles": cache,
     }
 
 
 def main():
     now = datetime.now(SCHOOL_TZ)
-    dry = "--dry-run" in sys.argv
-    _, resolved_today, open_count, problems, changes, releases = fetch(now)
+    changes, solutions = fetch()
 
-    if dry:
-        print(f"incidents: {len(resolved_today)} resolved today, {open_count} open")
-        print(f"problems: {len(problems)}  changes: {len(changes)}  releases: {len(releases)}")
-        print("problem states:", sorted(problem_state(p) for p in problems))
-        print("change states:", sorted(change_state(c, now) for c in changes))
+    if "--dry-run" in sys.argv:
+        print(f"open changes: {sum(change_state(c, now) in ('planned','scheduled','in_progress') for c in changes)}")
+        print(f"my solutions: {len(solutions)}")
         return
 
     try:
@@ -348,20 +218,13 @@ def main():
             prev = json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
         prev = {}
-    cache = prev.get("_titles", {})
 
     import anthropic
     client = anthropic.Anthropic()
-    data = build(client, cache, now, resolved_today, open_count, problems, changes, releases)
-
-    # Don't wipe yesterday's incident log on a quiet day; ITIL lanes still refresh.
-    if not data["incidents"]["log"] and prev.get("incidents"):
-        data["incidents"]["log"] = []
-        data["incidents"]["quiet"] = True
+    data = build(client, prev.get("_titles", {}), now, changes, solutions)
 
     strip = lambda d: {k: v for k, v in d.items() if k not in ("updated", "_titles")}
     changed = strip(data) != strip(prev)
-
     if changed:
         os.makedirs(os.path.dirname(OPS_PATH), exist_ok=True)
         with open(OPS_PATH, "w") as f:
@@ -375,7 +238,6 @@ def main():
     if gh:
         with open(gh, "a") as f:
             f.write(f"changed={'true' if changed else 'false'}\n")
-            f.write(f"count={data['incidents']['resolved_today']}\n")
 
 
 if __name__ == "__main__":
