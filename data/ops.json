@@ -1,8 +1,14 @@
 {
- "updated": "2026-11-23T11:22-06:00",
+ "updated": "2026-11-23T11:24-06:00",
  "incidents": {
-  "date": "2026-11-23",
-  "log": []
+  "date": "2026-11-20",
+  "log": [
+   {
+    "headline": "Sorted 75 quiet Macs in Jamf",
+    "detail": "I checked each Mac that had gone quiet in our device inventory and decided its fate: 16 old Intel laptops were retired, 2 were repaired, 13 were turned into spares, and 14 were renamed, with the rest left in place for specific reasons.",
+    "date": "2026-11-20"
+   }
+  ]
  },
  "problems": [
   {
