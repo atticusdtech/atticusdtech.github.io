@@ -214,8 +214,8 @@ def incident_bullet(client, t):
     subcategory = (t.get("subcategory") or {}).get("name", "")
     notes = redact(t.get("resolution_description") or t.get("description") or "")[:1500]
     out = ask(client, INCIDENT_PROMPT, f"Category: {category}\nSubcategory: {subcategory}\nResolution notes: {notes}")
-    head = (out.get("headline") or "").strip() or f"Resolved a {category.lower() or 'help desk'} incident"
-    return {"headline": head, "detail": (out.get("detail") or "").strip()}
+    head, detail = (out.get("headline") or "").strip(), (out.get("detail") or "").strip()
+    return {"headline": head, "detail": detail} if head and detail else None
 
 
 # --- build -----------------------------------------------------------------
@@ -313,7 +313,13 @@ def build(client, cache, now, resolved_today, open_count, problems, changes, rel
     order_c = {"in_progress": 0, "scheduled": 1, "planned": 2, "completed": 3, "rolled_back": 4, "cancelled": 5}
     out_c.sort(key=lambda x: (order_c[x["state"]], x["done"] or "", x["id"]), reverse=False)
 
-    log = [incident_bullet(client, t) for t in resolved_today[:MAX_LOG]]
+    log = []
+    for t in resolved_today:
+        if len(log) >= MAX_LOG:
+            break
+        b = incident_bullet(client, t)
+        if b:
+            log.append(b)
 
     return {
         "updated": now.isoformat(timespec="minutes"),
