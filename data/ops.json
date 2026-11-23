@@ -1,7 +1,58 @@
 {
- "updated": "2026-11-23T11:30-06:00",
- "changes": [],
- "changes_total": 0,
+ "updated": "2026-11-23T11:19-06:00",
+ "changes": [
+  {
+   "title": "Stop recurring Chromebook bulk assignment",
+   "state": "in_progress",
+   "start": "2026-11-23"
+  },
+  {
+   "title": "Remove old local accounts from loaner devices",
+   "state": "in_progress",
+   "start": "2026-11-23"
+  },
+  {
+   "title": "Upgrade six substitute loaner Macs to macOS 27",
+   "state": "in_progress",
+   "start": "2026-11-23"
+  },
+  {
+   "title": "Allow app updates to finish while open",
+   "state": "in_progress",
+   "start": "2026-11-23"
+  },
+  {
+   "title": "Jamf profile scope cleanup",
+   "state": "planned",
+   "start": "2026-11-20"
+  }
+ ],
+ "changes_total": 5,
  "solutions": [],
- "_titles": {}
+ "_titles": {
+  "change:12": {
+   "h": "dcb563e71c3a",
+   "t": "Stop recurring Chromebook bulk assignment"
+  },
+  "change:9": {
+   "h": "8b925934f29e",
+   "t": null
+  },
+  "change:8": {
+   "h": "635d9afe75ab",
+   "t": "Remove old local accounts from loaner devices"
+  },
+  "change:7": {
+   "h": "579cfcb960d7",
+   "t": "Upgrade six substitute loaner Macs to macOS 27"
+  },
+  "change:6": {
+   "h": "1d284444d2ab",
+   "t": "Allow app updates to finish while open"
+  },
+  "change:2": {
+   "h": "bad3a7e9861f",
+   "t": "Jamf profile scope cleanup"
+  }
+ }
 }
