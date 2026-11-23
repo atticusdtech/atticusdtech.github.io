@@ -225,16 +225,32 @@ def build(client, cache, now, incidents, problems, changes, releases, solutions)
     cutoff = now.date() - timedelta(days=DONE_WINDOW)
     recent = lambda rec: (local(rec.get("updated_at")) or now).date() >= cutoff
 
+    # public IDs, and which records are published (open problems never are)
+    pid = {}
+    for p in problems:
+        if problem_resolved(p):
+            pid[p["id"]] = f"PRB-{p['number']}"
+    for c in changes:
+        pid[c["id"]] = f"CHG-{c['number']}"
+    for r in releases:
+        pid[r["id"]] = f"REL-{r['number']}"
+    links = lambda rec, key: [pid[i] for i in ids(rec, key) if i in pid]
+    release_of = {}
+    for r in releases:
+        for i in ids(r, "changes"):
+            release_of.setdefault(i, []).append(pid[r["id"]])
+
     # incidents: newest resolved first, up to 4 bullets from the last 3 days with any
     inc = [(local(t["updated_at"]).date(), t) for t in incidents if t.get("updated_at")]
-    days = sorted({d for d, _ in inc}, reverse=True)[:3]
+    days = sorted({d for d, _ in inc}, reverse=True)[:5]
     log, last_day = [], None
     for d, t in inc:
-        if d not in days or len(log) >= 4:
+        if d not in days or len(log) >= 8:
             continue
         b = incident_bullet(client, t)
         if b:
-            log.append({**b, "date": d.isoformat()})
+            prob = (t.get("problem") or {}).get("id")
+            log.append({**b, "date": d.isoformat(), "problem": pid.get(prob)})
             last_day = last_day or d
 
     out_p = []
@@ -243,7 +259,8 @@ def build(client, cache, now, incidents, problems, changes, releases, solutions)
             continue
         title = public_title(client, cache, "problem", p)
         if title:
-            out_p.append({"title": title, "incidents": len(ids(p, "incidents")),
+            out_p.append({"id": pid[p["id"]], "title": title, "incidents": len(ids(p, "incidents")),
+                          "changes": links(p, "changes"),
                           "date": local(p["updated_at"]).date().isoformat()})
     out_p.sort(key=lambda x: x["date"], reverse=True)
 
@@ -257,7 +274,9 @@ def build(client, cache, now, incidents, problems, changes, releases, solutions)
         if not title:
             continue
         start = local(c.get("planned_start_at"))
-        out_c.append({"title": title, "state": state,
+        out_c.append({"id": pid[c["id"]], "title": title, "state": state,
+                      "fixes": links(c, "problems"), "releases": release_of.get(c["id"], []),
+                      "incidents": len(ids(c, "incidents")),
                       "start": start.date().isoformat() if start else None,
                       "date": local(c["updated_at"]).date().isoformat() if state == "completed" else None})
     rank = {"in_progress": 0, "scheduled": 1, "planned": 2, "completed": 3}
@@ -272,7 +291,7 @@ def build(client, cache, now, incidents, problems, changes, releases, solutions)
         if not title:
             continue
         linked = ids(r, "changes")
-        out_r.append({"title": title, "done": done,
+        out_r.append({"id": pid[r["id"]], "title": title, "done": done, "changes": links(r, "changes"),
                       "changes_done": sum(change_state_by_id.get(i) == "completed" for i in linked),
                       "changes_total": len(linked)})
 
@@ -285,8 +304,8 @@ def build(client, cache, now, incidents, problems, changes, releases, solutions)
     return {
         "updated": now.isoformat(timespec="minutes"),
         "incidents": {"date": last_day.isoformat() if last_day else None, "log": log},
-        "problems": out_p[:MAX_ITEMS],
-        "changes": out_c[:MAX_ITEMS + 2],
+        "problems": out_p,
+        "changes": out_c,
         "releases": out_r,
         "solutions": out_s,
         "_titles": cache,

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Help desk by the numbers · Atticus Deutsch</title>
 <meta name="description" content="Response times, resolution times, SLA compliance and ticket volume from a working school help desk, run with an AI agent.">
-<link rel="stylesheet" href="style.css?v=8">
+<link rel="stylesheet" href="style.css?v=9">
 <style>
 :root {
   --q0: #ece9e2; --q1: #c4e0d5; --q2: #86c0aa; --q3: #3f8f77; --q4: #1f6f5c;
@@ -67,7 +67,7 @@ details summary { cursor: pointer; font: 13px/1.4 var(--mono); color: var(--acce
 <div class="layout three">
   <aside class="side">
     <a class="me" href="index.html"><img class="avatar" src="avatar.jpg" alt="" width="64" height="64"><span><strong>Atticus Deutsch</strong><span class="tag">AI native system administration</span></span></a>
-    <nav class="nav"><a href="index.html">Home</a><a href="stats.html" aria-current="page">Help desk stats</a><a href="index.html#writing">Writing</a></nav>
+    <nav class="nav"><a href="index.html">Home</a><a href="stats.html" aria-current="page">Help desk</a><a href="index.html#writing">Writing</a></nav>
     <ul class="contacts">
       <li><a href="mailto:atticus.d.tech@gmail.com">atticus.d.tech@gmail.com</a></li>
       <li><a href="https://github.com/atticusdtech">GitHub</a></li>
@@ -76,6 +76,7 @@ details summary { cursor: pointer; font: 13px/1.4 var(--mono); color: var(--acce
     </ul>
   </aside>
   <main class="main post wide">
+  <nav class="tabs" aria-label="Help desk"><a href="stats.html" aria-current="page">By the numbers</a><a href="live.html">Live</a></nav>
   <p class="meta">Updated <span id="updated"></span></p>
   <h1>Help desk by the numbers</h1>
 
@@ -214,6 +215,6 @@ DATA.months.forEach(m => { tb.insertAdjacentHTML('beforeend', `<tr><td>${new Dat
   });
 })();
 </script>
-<script src="ops.js?v=4" defer></script>
+<script src="ops.js?v=5" defer></script>
 </body>
 </html>
