@@ -1,20 +1,12 @@
 {
- "updated": "2026-11-23T11:14-06:00",
+ "updated": "2026-11-23T11:16-06:00",
  "incidents": {
   "resolved_today": 3,
   "open": 23,
   "log": [
    {
-    "headline": "Resolved a email request incident",
-    "detail": ""
-   },
-   {
-    "headline": "Resolved a email request incident",
-    "detail": ""
-   },
-   {
-    "headline": "Fixed a video call camera that kept panning",
-    "detail": "The picture kept zooming and panning because macOS Center Stage was running on the built-in camera, and Zoom's own setting can't control it. I turned Center Stage off for the app in Control Center's Video Effects, and the requester confirmed the picture held steady."
+    "headline": "Stopped a Zoom camera from panning",
+    "detail": "The picture kept zooming and panning because macOS Center Stage was active, and Zoom's own settings can't control it. I turned Center Stage off in Control Center's Video Effects, and the requester confirmed the camera stayed steady."
    }
   ]
  },
