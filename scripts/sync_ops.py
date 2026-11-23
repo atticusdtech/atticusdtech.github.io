@@ -258,8 +258,10 @@ def build(client, cache, now, incidents, problems, changes, releases, solutions)
             continue
         b = incident_bullet(client, cache, t)
         if b:
-            prob = (t.get("problem") or {}).get("id")
-            log.append({**b, "date": d.isoformat(), "problem": pid.get(prob)})
+            pr = t.get("problem") or t.get("problems") or []
+            pr = pr if isinstance(pr, list) else [pr]
+            prob = next((pid[x["id"]] for x in pr if isinstance(x, dict) and x.get("id") in pid), None)
+            log.append({**b, "date": d.isoformat(), "problem": prob})
             last_day = last_day or d
 
     out_p = []
