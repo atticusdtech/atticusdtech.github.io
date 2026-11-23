@@ -31,9 +31,9 @@
 
     const inc = d.incidents || {};
     const today = new Date().toISOString().slice(0, 10);
-    const incLabel = inc.date === today ? 'Resolved today' : inc.date ? `Resolved ${day(inc.date)}` : 'Resolved';
+    const incLabel = 'Incidents resolved';
     const incidents = (inc.log || []).map(b =>
-      `<li data-s="done"><span class="now-title">${esc(b.headline)}</span><span class="now-detail">${esc(b.detail)}</span></li>`);
+      `<li data-s="done"><span class="now-title">${esc(b.headline)}</span><span class="now-detail">${esc(b.detail)}</span>${b.date ? `<span class="now-meta">${b.date === today ? 'Today' : day(b.date)}</span>` : ''}</li>`);
 
     const solutions = (d.solutions || []).map(s => item('done', s.title, day(s.date)));
 

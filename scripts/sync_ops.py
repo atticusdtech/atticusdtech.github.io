@@ -199,8 +199,11 @@ Reply with ONLY a JSON object: {"headline": "...", "detail": "..."}"""
 
 def incident_bullet(client, t):
     category = (t.get("category") or {}).get("name", "")
-    notes = redact(t.get("resolution_description") or t.get("description") or "")[:1500]
-    out = ask(client, INCIDENT_PROMPT, f"Category: {category}\nResolution notes: {notes}")
+    title = redact(t.get("name"))
+    desc = redact(t.get("description_no_html") or t.get("description"))[:800]
+    notes = redact(t.get("resolution_description"))[:1200]
+    out = ask(client, INCIDENT_PROMPT,
+              f"Category: {category}\nTitle: {title}\nRequest: {desc}\nResolution notes: {notes}")
     head, detail = (out.get("headline") or "").strip(), (out.get("detail") or "").strip()
     return {"headline": head, "detail": detail} if head and detail else None
 
@@ -222,16 +225,17 @@ def build(client, cache, now, incidents, problems, changes, releases, solutions)
     cutoff = now.date() - timedelta(days=DONE_WINDOW)
     recent = lambda rec: (local(rec.get("updated_at")) or now).date() >= cutoff
 
-    # incidents: the latest day I resolved anything
+    # incidents: newest resolved first, up to 4 bullets from the last 3 days with any
     inc = [(local(t["updated_at"]).date(), t) for t in incidents if t.get("updated_at")]
-    last_day = max((d for d, _ in inc), default=None)
-    log = []
+    days = sorted({d for d, _ in inc}, reverse=True)[:3]
+    log, last_day = [], None
     for d, t in inc:
-        if d != last_day or len(log) >= 4:
+        if d not in days or len(log) >= 4:
             continue
         b = incident_bullet(client, t)
         if b:
-            log.append(b)
+            log.append({**b, "date": d.isoformat()})
+            last_day = last_day or d
 
     out_p = []
     for p in problems:
