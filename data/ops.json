@@ -1,33 +1,79 @@
 {
- "updated": "2026-11-23T11:19-06:00",
+ "updated": "2026-11-23T11:22-06:00",
+ "incidents": {
+  "date": "2026-11-23",
+  "log": []
+ },
+ "problems": [
+  {
+   "title": "Local admin password change failed on Macs",
+   "incidents": 1,
+   "date": "2026-11-20"
+  },
+  {
+   "title": "Printer policies point to nonexistent print queues",
+   "incidents": 6,
+   "date": "2026-11-20"
+  }
+ ],
  "changes": [
   {
    "title": "Stop recurring Chromebook bulk assignment",
    "state": "in_progress",
-   "start": "2026-11-23"
+   "start": "2026-11-23",
+   "date": null
   },
   {
    "title": "Remove old local accounts from loaner devices",
    "state": "in_progress",
-   "start": "2026-11-23"
+   "start": "2026-11-23",
+   "date": null
   },
   {
    "title": "Upgrade six substitute loaner Macs to macOS 27",
    "state": "in_progress",
-   "start": "2026-11-23"
+   "start": "2026-11-23",
+   "date": null
   },
   {
    "title": "Allow app updates to finish while open",
    "state": "in_progress",
-   "start": "2026-11-23"
+   "start": "2026-11-23",
+   "date": null
   },
   {
    "title": "Jamf profile scope cleanup",
    "state": "planned",
-   "start": "2026-11-20"
+   "start": "2026-11-20",
+   "date": null
+  },
+  {
+   "title": "Replace policy with in-place LA password change",
+   "state": "completed",
+   "start": "2026-11-04",
+   "date": "2026-11-20"
+  },
+  {
+   "title": "Move Self Service printer policies to Jamf printer objects",
+   "state": "completed",
+   "start": "2026-10-29",
+   "date": "2026-11-20"
   }
  ],
- "changes_total": 5,
+ "releases": [
+  {
+   "title": "Jamf Pro configuration as code with Terraform",
+   "done": false,
+   "changes_done": 0,
+   "changes_total": 0
+  },
+  {
+   "title": "Mac inventory cleanup",
+   "done": false,
+   "changes_done": 1,
+   "changes_total": 4
+  }
+ ],
  "solutions": [],
  "_titles": {
   "change:12": {
@@ -53,6 +99,34 @@
   "change:2": {
    "h": "bad3a7e9861f",
    "t": "Jamf profile scope cleanup"
+  },
+  "problem:12": {
+   "h": "ca9b79714af0",
+   "t": "Local admin password change failed on Macs"
+  },
+  "problem:11": {
+   "h": "a2fc52e0be0b",
+   "t": "Printer policies point to nonexistent print queues"
+  },
+  "change:11": {
+   "h": "18fe2c54222f",
+   "t": "Replace policy with in-place LA password change"
+  },
+  "change:10": {
+   "h": "20ca48e4edc0",
+   "t": "Move Self Service printer policies to Jamf printer objects"
+  },
+  "change:3": {
+   "h": "ae4a3c8a2ff7",
+   "t": null
+  },
+  "release:3": {
+   "h": "47c8555345f6",
+   "t": "Jamf Pro configuration as code with Terraform"
+  },
+  "release:2": {
+   "h": "356c8055e476",
+   "t": "Mac inventory cleanup"
   }
  }
 }
