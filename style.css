@@ -170,3 +170,26 @@ table.data td.num, table.data th.num { text-align: right; font-family: var(--mon
   .live-table { display: block; overflow-x: auto; }
 }
 .node-empty { border: 0; background: transparent; }
+
+/* Home hub graphic: Claude connected to every system */
+.hub { margin: 28px 0 8px; }
+.hub svg { width: 100%; height: auto; display: block; overflow: visible; }
+.hub figcaption { font-size: .9rem; color: var(--muted); margin-top: 6px; text-align: center; }
+.hub-line { stroke: var(--rule); stroke-width: 2; fill: none; }
+.hub-flow { stroke: #d97757; stroke-width: 2; fill: none; stroke-linecap: round; stroke-dasharray: 10 240; animation: hubflow 3.2s linear infinite; opacity: .9; }
+@keyframes hubflow { from { stroke-dashoffset: 0; } to { stroke-dashoffset: -250; } }
+.hub-halo { fill: color-mix(in srgb, #d97757 10%, transparent); animation: hubhalo 3.2s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
+@keyframes hubhalo { 0%, 100% { transform: scale(.92); opacity: .7; } 50% { transform: scale(1.05); opacity: 1; } }
+.hub-core { fill: var(--bg); stroke: #d97757; stroke-width: 2; }
+.hub-core-label { font: 600 13px var(--mono); fill: var(--fg); letter-spacing: .04em; }
+.hub-card { fill: var(--code-bg); stroke: var(--rule); }
+.hub-node { color: var(--fg); }
+.hub-label { font: 600 14px var(--sans); fill: var(--fg); }
+.hub-sub { font: 11px var(--mono); fill: var(--muted); }
+.m-z { font: 700 19px var(--sans); fill: #fff; }
+.m-term { fill: #1d1d1b; }
+.m-ssh { font: 700 13px var(--mono); fill: #6cc3a8; }
+.m-word { font: 800 15px var(--sans); letter-spacing: -.02em; }
+.m-jamf { fill: currentColor; }
+.m-pc { fill: #5aa832; font-size: 18px; }
+@media (prefers-reduced-motion: reduce) { .hub-flow, .hub-halo { animation: none; } .hub-flow { display: none; } }
