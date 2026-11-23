@@ -1,0 +1,38 @@
+{
+ "updated": "2026-11-23T10:30-06:00",
+ "incidents": {
+  "resolved_today": 3,
+  "open": 23,
+  "log": [
+   {"headline": "Rebuilt a staff Mac's printer queue remotely", "detail": "The queue pointed at a retired print server, so I removed it and reinstalled it from Self Service without a visit."},
+   {"headline": "Swapped a broken student Chromebook for a loaner", "detail": "Logged the damage, assigned a loaner in Google Admin, and queued the original for repair."},
+   {"headline": "Cleared a stuck Jamf Connect sign-in", "detail": "Reset the user's login keychain so the sign-in window stopped coming back, and linked it to the open problem record."}
+  ]
+ },
+ "problems": [
+  {"id": "PRB-15", "title": "Student emails to the help desk open two tickets each", "state": "known_error", "incidents": 13, "changes": [], "today": false},
+  {"id": "PRB-8", "title": "Jamf Connect sign-in window returns after login", "state": "known_error", "incidents": 8, "changes": [], "today": false},
+  {"id": "PRB-16", "title": "Google Admin pushes Chromebook Wi-Fi profiles last", "state": "known_error", "incidents": 3, "changes": [], "today": false},
+  {"id": "PRB-13", "title": "4 GB student Chromebooks run out of memory", "state": "known_error", "incidents": 3, "changes": [], "today": false},
+  {"id": "PRB-10", "title": "Claude update password prompt keeps coming back", "state": "fix_in_change", "incidents": 4, "changes": ["CHG-6"], "today": false},
+  {"id": "PRB-14", "title": "Bulk user assignment catches loaner and retired Chromebooks", "state": "fix_in_change", "incidents": 3, "changes": ["CHG-12"], "today": false},
+  {"id": "PRB-11", "title": "Self Service printer installs pointed at the wrong server", "state": "resolved", "incidents": 6, "changes": ["CHG-10"], "today": false},
+  {"id": "PRB-12", "title": "Local admin password policy failed on some Macs", "state": "resolved", "incidents": 1, "changes": ["CHG-11"], "today": false}
+ ],
+ "changes": [
+  {"id": "CHG-6", "title": "Let Claude app updates finish while the app is open", "state": "in_progress", "type": "Normal", "fixes": ["PRB-10"], "incidents": 4, "start": null, "done": null, "today": false},
+  {"id": "CHG-7", "title": "Upgrade six substitute loaner Macs to macOS 27", "state": "in_progress", "type": "Normal", "fixes": [], "incidents": 0, "start": null, "done": null, "today": false},
+  {"id": "CHG-8", "title": "Remove old local accounts from substitute loaners", "state": "in_progress", "type": "Normal", "fixes": [], "incidents": 0, "start": null, "done": null, "today": false},
+  {"id": "CHG-9", "title": "Move substitute loaners into their own department", "state": "in_progress", "type": "Normal", "fixes": [], "incidents": 0, "start": null, "done": null, "today": false},
+  {"id": "CHG-2", "title": "Narrow the scope of the Jamf Connect settings profile", "state": "in_progress", "type": "Normal", "fixes": [], "incidents": 1, "start": null, "done": null, "today": false},
+  {"id": "CHG-12", "title": "Stop the recurring Chromebook bulk user assignment", "state": "planned", "type": "Normal", "fixes": ["PRB-14"], "incidents": 0, "start": null, "done": null, "today": false},
+  {"id": "CHG-10", "title": "Move Self Service printers to Jamf Pro printer objects", "state": "completed", "type": "Normal", "fixes": ["PRB-11"], "incidents": 2, "start": null, "done": "2026-11-20", "today": false},
+  {"id": "CHG-11", "title": "Change the local admin password in place instead of resetting it", "state": "completed", "type": "Normal", "fixes": ["PRB-12"], "incidents": 1, "start": null, "done": "2026-11-20", "today": false},
+  {"id": "CHG-3", "title": "Retire 18 old Mac records into the asset inventory", "state": "completed", "type": "Normal", "fixes": [], "incidents": 1, "start": null, "done": "2026-11-20", "today": false}
+ ],
+ "releases": [
+  {"id": "REL-2", "title": "Mac inventory cleanup", "changes_done": 1, "changes_total": 4, "changes": ["CHG-3", "CHG-7", "CHG-8", "CHG-9"], "target": null},
+  {"id": "REL-3", "title": "Jamf Pro configuration as code with Terraform", "changes_done": 0, "changes_total": 0, "changes": [], "target": null}
+ ],
+ "_titles": {}
+}
