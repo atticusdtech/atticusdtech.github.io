@@ -1,8 +1,57 @@
 {
- "updated": "2026-11-23T11:27-06:00",
+ "updated": "2026-11-23T11:32-06:00",
  "incidents": {
-  "date": null,
-  "log": []
+  "date": "2026-11-23",
+  "log": [
+   {
+    "headline": "Stopped a laptop camera from auto-moving",
+    "detail": "A teacher's video picture kept panning and zooming even though the video app's setting was off. The cause was a system-level camera effect on their laptop, which the app setting doesn't control, so I turned it off and they confirmed the fix.",
+    "date": "2026-11-23",
+    "problem": null
+   },
+   {
+    "headline": "Swapped a damaged student Chromebook",
+    "detail": "A student's Chromebook had a cracked screen and a broken hinge, so I issued a loaner while I kept their device for repair. When the loaner came back in good condition, I replaced it with a spare and closed out the ticket.",
+    "date": "2026-11-20",
+    "problem": null
+   },
+   {
+    "headline": "Repaired a student's broken Chromebook",
+    "detail": "I repaired the student's damaged Chromebook and returned it to them. Once the loaner came back in good condition, I closed out the swap.",
+    "date": "2026-11-20",
+    "problem": null
+   },
+   {
+    "headline": "Restored a missing app on a staff Mac remotely",
+    "detail": "A staff member's app search was broken after the disk filled up, so I rebuilt the search index remotely, which brought the app back within a minute. I also set up a copier queue for them and supported their move to the latest macOS.",
+    "date": "2026-11-20",
+    "problem": "PRB-11"
+   },
+   {
+    "headline": "Set up a replacement MacBook Air for a teacher",
+    "detail": "I enrolled a new MacBook Air in our device management system and moved the teacher's files over from their old laptop. The swap was completed on October 29, 2026.",
+    "date": "2026-11-20",
+    "problem": "PRB-11"
+   },
+   {
+    "headline": "Responded to a low black toner alert",
+    "detail": "The print management system flagged two shared printers with black toner down to 2%, and I handled the alert. Resolution details weren't recorded in the ticket.",
+    "date": "2026-11-20",
+    "problem": null
+   },
+   {
+    "headline": "Unblocked a rhyming website for a music class",
+    "detail": "A teacher asked for a rhyming dictionary site to be unblocked so students could use it for songwriting, and I reviewed the request and allowed access.",
+    "date": "2026-11-19",
+    "problem": null
+   },
+   {
+    "headline": "Swapped a student's broken Chromebook hinge",
+    "detail": "A student's Chromebook had a hinge that was coming fully off, so I issued a loaner while it was with IT. When the loaner came back in good condition, I gave the student a spare device to keep.",
+    "date": "2026-11-19",
+    "problem": null
+   }
+  ]
  },
  "problems": [
   {
@@ -180,6 +229,120 @@
   "release:2": {
    "h": "356c8055e476",
    "t": "Mac inventory cleanup"
+  },
+  "incident:43315": {
+   "b": null
+  },
+  "incident:43327": {
+   "b": null
+  },
+  "incident:43331": {
+   "b": {
+    "headline": "Stopped a laptop camera from auto-moving",
+    "detail": "A teacher's video picture kept panning and zooming even though the video app's setting was off. The cause was a system-level camera effect on their laptop, which the app setting doesn't control, so I turned it off and they confirmed the fix."
+   }
+  },
+  "incident:42903": {
+   "b": {
+    "headline": "Swapped a damaged student Chromebook",
+    "detail": "A student's Chromebook had a cracked screen and a broken hinge, so I issued a loaner while I kept their device for repair. When the loaner came back in good condition, I replaced it with a spare and closed out the ticket."
+   }
+  },
+  "incident:43196": {
+   "b": null
+  },
+  "incident:43181": {
+   "b": null
+  },
+  "incident:43180": {
+   "b": null
+  },
+  "incident:43143": {
+   "b": null
+  },
+  "incident:43060": {
+   "b": {
+    "headline": "Repaired a student's broken Chromebook",
+    "detail": "I repaired the student's damaged Chromebook and returned it to them. Once the loaner came back in good condition, I closed out the swap."
+   }
+  },
+  "incident:43059": {
+   "b": null
+  },
+  "incident:43104": {
+   "b": null
+  },
+  "incident:43045": {
+   "b": null
+  },
+  "incident:43084": {
+   "b": null
+  },
+  "incident:43206": {
+   "b": null
+  },
+  "incident:43191": {
+   "b": null
+  },
+  "incident:43186": {
+   "b": {
+    "headline": "Restored a missing app on a staff Mac remotely",
+    "detail": "A staff member's app search was broken after the disk filled up, so I rebuilt the search index remotely, which brought the app back within a minute. I also set up a copier queue for them and supported their move to the latest macOS."
+   }
+  },
+  "incident:43040": {
+   "b": {
+    "headline": "Set up a replacement MacBook Air for a teacher",
+    "detail": "I enrolled a new MacBook Air in our device management system and moved the teacher's files over from their old laptop. The swap was completed on October 29, 2026."
+   }
+  },
+  "incident:43146": {
+   "b": null
+  },
+  "incident:43140": {
+   "b": null
+  },
+  "incident:43139": {
+   "b": null
+  },
+  "incident:43316": {
+   "b": null
+  },
+  "incident:43188": {
+   "b": null
+  },
+  "incident:43312": {
+   "b": {
+    "headline": "Responded to a low black toner alert",
+    "detail": "The print management system flagged two shared printers with black toner down to 2%, and I handled the alert. Resolution details weren't recorded in the ticket."
+   }
+  },
+  "incident:43301": {
+   "b": null
+  },
+  "incident:43302": {
+   "b": null
+  },
+  "incident:43300": {
+   "b": null
+  },
+  "incident:43304": {
+   "b": null
+  },
+  "incident:43183": {
+   "b": null
+  },
+  "incident:43296": {
+   "b": {
+    "headline": "Unblocked a rhyming website for a music class",
+    "detail": "A teacher asked for a rhyming dictionary site to be unblocked so students could use it for songwriting, and I reviewed the request and allowed access."
+   }
+  },
+  "incident:43051": {
+   "b": {
+    "headline": "Swapped a student's broken Chromebook hinge",
+    "detail": "A student's Chromebook had a hinge that was coming fully off, so I issued a loaner while it was with IT. When the loaner came back in good condition, I gave the student a spare device to keep."
+   }
   }
  }
 }
