@@ -1,81 +1,128 @@
 {
- "updated": "2026-11-23T11:24-06:00",
+ "updated": "2026-11-23T11:27-06:00",
  "incidents": {
-  "date": "2026-11-20",
-  "log": [
-   {
-    "headline": "Sorted 75 quiet Macs in Jamf",
-    "detail": "I checked each Mac that had gone quiet in our device inventory and decided its fate: 16 old Intel laptops were retired, 2 were repaired, 13 were turned into spares, and 14 were renamed, with the rest left in place for specific reasons.",
-    "date": "2026-11-20"
-   }
-  ]
+  "date": null,
+  "log": []
  },
  "problems": [
   {
+   "id": "PRB-12",
    "title": "Local admin password change failed on Macs",
    "incidents": 1,
+   "changes": [
+    "CHG-11"
+   ],
    "date": "2026-11-20"
   },
   {
+   "id": "PRB-11",
    "title": "Printer policies point to nonexistent print queues",
    "incidents": 6,
+   "changes": [
+    "CHG-10"
+   ],
    "date": "2026-11-20"
   }
  ],
  "changes": [
   {
+   "id": "CHG-12",
    "title": "Stop recurring Chromebook bulk assignment",
    "state": "in_progress",
+   "fixes": [],
+   "releases": [],
+   "incidents": 0,
    "start": "2026-11-23",
    "date": null
   },
   {
+   "id": "CHG-8",
    "title": "Remove old local accounts from loaner devices",
    "state": "in_progress",
+   "fixes": [],
+   "releases": [
+    "REL-2"
+   ],
+   "incidents": 0,
    "start": "2026-11-23",
    "date": null
   },
   {
+   "id": "CHG-7",
    "title": "Upgrade six substitute loaner Macs to macOS 27",
    "state": "in_progress",
+   "fixes": [],
+   "releases": [
+    "REL-2"
+   ],
+   "incidents": 0,
    "start": "2026-11-23",
    "date": null
   },
   {
+   "id": "CHG-6",
    "title": "Allow app updates to finish while open",
    "state": "in_progress",
+   "fixes": [],
+   "releases": [],
+   "incidents": 4,
    "start": "2026-11-23",
    "date": null
   },
   {
+   "id": "CHG-2",
    "title": "Jamf profile scope cleanup",
    "state": "planned",
+   "fixes": [],
+   "releases": [],
+   "incidents": 1,
    "start": "2026-11-20",
    "date": null
   },
   {
+   "id": "CHG-11",
    "title": "Replace policy with in-place LA password change",
    "state": "completed",
+   "fixes": [
+    "PRB-12"
+   ],
+   "releases": [],
+   "incidents": 1,
    "start": "2026-11-04",
    "date": "2026-11-20"
   },
   {
+   "id": "CHG-10",
    "title": "Move Self Service printer policies to Jamf printer objects",
    "state": "completed",
+   "fixes": [
+    "PRB-11"
+   ],
+   "releases": [],
+   "incidents": 2,
    "start": "2026-10-29",
    "date": "2026-11-20"
   }
  ],
  "releases": [
   {
+   "id": "REL-3",
    "title": "Jamf Pro configuration as code with Terraform",
    "done": false,
+   "changes": [],
    "changes_done": 0,
    "changes_total": 0
   },
   {
+   "id": "REL-2",
    "title": "Mac inventory cleanup",
    "done": false,
+   "changes": [
+    "CHG-3",
+    "CHG-7",
+    "CHG-8",
+    "CHG-9"
+   ],
    "changes_done": 1,
    "changes_total": 4
   }
