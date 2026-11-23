@@ -152,9 +152,9 @@ footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--rule);
 .node-meta { font: 11.5px/1.4 var(--mono); color: var(--muted); margin-top: 3px; }
 .node:not(.node-empty) + .node:not(.node-empty)::before, .node-stack + .node:not(.node-empty)::before, .node:not(.node-empty) + .node-stack::before {
   content: "→"; position: absolute; left: -15px; top: 50%; transform: translateY(-50%); font: 12px/1 var(--mono); color: var(--muted); }
-.node-stack { position: relative; display: grid; gap: 6px; }
+.node-stack { position: relative; display: grid; gap: 6px; align-content: start; }
 .node-empty { border: 1px dashed var(--rule); background: transparent; }
-.live-table .id { font: 11px/1 var(--mono); color: var(--muted); margin-right: 4px; white-space: nowrap; }
+.live-table .rid { font: 11px/1 var(--mono); color: var(--muted); margin-right: 4px; white-space: nowrap; }
 .live-table .muted { color: var(--muted); }
 .live-table td { vertical-align: top; }
 table.data { border-collapse: collapse; width: 100%; font-size: .9rem; margin-top: 10px; }
@@ -169,3 +169,4 @@ table.data td.num, table.data th.num { text-align: right; font-family: var(--mon
   .node:not(.node-empty) + .node:not(.node-empty)::before, .node-stack + .node:not(.node-empty)::before, .node:not(.node-empty) + .node-stack::before { content: none; }
   .live-table { display: block; overflow-x: auto; }
 }
+.node-empty { border: 0; background: transparent; }

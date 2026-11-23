@@ -187,8 +187,8 @@ Style:
 laptop and rebuilt it without a visit."
 
 Rules:
-- Only use facts in the notes. If the notes are too thin to say what was actually \
-done, reply {"headline": null}.
+- Only use facts in the title, request and notes. Keep it general when details \
+are thin; don't invent specifics.
 - Never include a person's name, room, building, identifiers, email, phone, the \
 school's name, or security specifics.
 - Anything about students' health, discipline, grades or records: {"headline": null}.
@@ -197,7 +197,16 @@ school's name, or security specifics.
 Reply with ONLY a JSON object: {"headline": "...", "detail": "..."}"""
 
 
-def incident_bullet(client, t):
+def incident_bullet(client, cache, t):
+    key = f"incident:{t['number']}"
+    if key in cache:
+        return cache[key].get("b")
+    b = _incident_bullet(client, t)
+    cache[key] = {"b": b}
+    return b
+
+
+def _incident_bullet(client, t):
     category = (t.get("category") or {}).get("name", "")
     title = redact(t.get("name"))
     desc = redact(t.get("description_no_html") or t.get("description"))[:800]
@@ -247,7 +256,7 @@ def build(client, cache, now, incidents, problems, changes, releases, solutions)
     for d, t in inc:
         if d not in days or len(log) >= 8:
             continue
-        b = incident_bullet(client, t)
+        b = incident_bullet(client, cache, t)
         if b:
             prob = (t.get("problem") or {}).get("id")
             log.append({**b, "date": d.isoformat(), "problem": pid.get(prob)})

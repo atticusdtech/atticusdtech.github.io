@@ -30,13 +30,21 @@
       rows.push({ c, probs, incN, rel });
     }
     for (const p of d.problems || []) if (!usedP.has(p.id)) rows.push({ c: null, probs: [p], incN: p.incidents, rel: null });
-    // group: by release, then chains with a problem first
-    rows.sort((a, b) => (a.rel ? a.rel.id : '~').localeCompare(b.rel ? b.rel.id : '~') || (b.probs.length - a.probs.length) || (b.incN - a.incN));
+    // one row per release (its changes stacked), then standalone chains
+    const merged = [], byRel = {};
+    for (const r of rows) {
+      if (!r.rel) { merged.push({ ...r, cs: r.c ? [r.c] : [] }); continue; }
+      const g = byRel[r.rel.id] || (byRel[r.rel.id] = { rel: r.rel, probs: [], cs: [], incN: 0 });
+      g.probs.push(...r.probs); if (r.c) g.cs.push(r.c); g.incN += r.incN;
+    }
+    merged.push(...Object.values(byRel));
+    merged.sort((a, b) => (b.probs.length - a.probs.length) || (b.incN - a.incN) || ((b.rel ? 1 : 0) - (a.rel ? 1 : 0)));
 
-    const flow = rows.map(({ c, probs, incN, rel }) => `<div class="flow-row">
+    const stack = items => (items.length > 1 ? `<div class="node-stack">${items.join('')}</div>` : items[0] || empty);
+    const flow = merged.map(({ cs, probs, incN, rel }) => `<div class="flow-row">
       ${incN ? node('inc', 'Incidents', plural(incN, 'incident'), 'resolved', true) : empty}
-      ${probs.length ? `<div class="node-stack">${probs.map(p => node('prb', p.id, p.title, `Solved ${day(p.date)}`, true)).join('')}</div>` : empty}
-      ${c ? node('chg', c.id, c.title, c.state === 'completed' ? `Done ${day(c.date)}` : STATE[c.state], c.state === 'completed') : empty}
+      ${stack(probs.map(p => node('prb', p.id, p.title, `Solved ${day(p.date)}`, true)))}
+      ${stack(cs.map(c => node('chg', c.id, c.title, c.state === 'completed' ? `Done ${day(c.date)}` : STATE[c.state], c.state === 'completed')))}
       ${rel ? node('rel', rel.id, rel.title, rel.done ? 'Shipped' : `${rel.changes_done} of ${plural(rel.changes_total, 'change')} done`, rel.done) : empty}
     </div>`).join('');
 
@@ -55,13 +63,13 @@
       : '<p class="note">Nothing here right now.</p>';
 
     const tChanges = table(['Change', 'Status', { t: 'Fixes' }, { t: 'Release' }], changes.map(c =>
-      `<tr><td><span class="id">${c.id}</span> ${esc(c.title)}</td><td>${c.state === 'completed' ? `Done ${day(c.date)}` : STATE[c.state]}</td><td>${(c.fixes || []).join(', ') || '—'}</td><td>${(c.releases || []).join(', ') || '—'}</td></tr>`));
+      `<tr><td><span class="rid">${c.id}</span> ${esc(c.title)}</td><td>${c.state === 'completed' ? `Done ${day(c.date)}` : STATE[c.state]}</td><td>${(c.fixes || []).join(', ') || '—'}</td><td>${(c.releases || []).join(', ') || '—'}</td></tr>`));
     const tReleases = table(['Release', 'Progress', { t: 'Changes' }], (d.releases || []).map(r => {
       const pct = r.changes_total ? Math.round((r.changes_done / r.changes_total) * 100) : 0;
-      return `<tr><td><span class="id">${r.id}</span> ${esc(r.title)}</td><td>${r.done ? 'Shipped' : r.changes_total ? `<span class="now-bar"><i style="width:${pct}%"></i></span>${r.changes_done} of ${r.changes_total}` : 'Planning'}</td><td>${(r.changes || []).join(', ') || '—'}</td></tr>`;
+      return `<tr><td><span class="rid">${r.id}</span> ${esc(r.title)}</td><td>${r.done ? 'Shipped' : r.changes_total ? `<span class="now-bar"><i style="width:${pct}%"></i></span>${r.changes_done} of ${r.changes_total}` : 'Planning'}</td><td>${(r.changes || []).join(', ') || '—'}</td></tr>`;
     }));
     const tProblems = table(['Problem', { t: 'Incidents', num: true }, 'Fixed by', 'Solved'], (d.problems || []).map(p =>
-      `<tr><td><span class="id">${p.id}</span> ${esc(p.title)}</td><td class="num">${p.incidents}</td><td>${(p.changes || []).join(', ') || '—'}</td><td>${day(p.date)}</td></tr>`));
+      `<tr><td><span class="rid">${p.id}</span> ${esc(p.title)}</td><td class="num">${p.incidents}</td><td>${(p.changes || []).join(', ') || '—'}</td><td>${day(p.date)}</td></tr>`));
     const tIncidents = table(['Incident', 'Problem', 'Resolved'], incLog.map(b =>
       `<tr><td><b>${esc(b.headline)}.</b> <span class="muted">${esc(b.detail)}</span></td><td>${b.problem || '—'}</td><td>${day(b.date)}</td></tr>`));
     const sol = d.solutions || [];
