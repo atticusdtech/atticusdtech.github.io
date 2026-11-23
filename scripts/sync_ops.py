@@ -156,7 +156,7 @@ reply with {"title": null}.
 Reply with ONLY a JSON object: {"title": "..."}"""
 
 INCIDENT_PROMPT = """You turn a K-12 school IT administrator's internal help-desk incident \
-into one changelog-style bullet for his personal portfolio site, written in his own \
+into one changelog-style bullet for their personal portfolio site, written in their own \
 voice (first person, past tense, plain language, no jargon dump).
 
 Match this style exactly:
@@ -183,7 +183,8 @@ def ask(client, system, user):
         system=system,
         messages=[{"role": "user", "content": user}],
     )
-    m = re.search(r"\{.*\}", resp.content[0].text, re.DOTALL)
+    text = "".join(b.text for b in resp.content if b.type == "text")
+    m = re.search(r"\{.*\}", text, re.DOTALL)
     try:
         return json.loads(m.group(0)) if m else {}
     except json.JSONDecodeError:
