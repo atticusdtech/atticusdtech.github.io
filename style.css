@@ -117,3 +117,7 @@ footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--rule);
 .now-title { display: block; font-size: .92rem; line-height: 1.4; }
 .now-meta { display: block; font: 11.5px/1.4 var(--mono); color: var(--muted); }
 .now-more { margin: 0; font: 11.5px/1.4 var(--mono); color: var(--muted); }
+.now-detail { display: block; font-size: .84rem; line-height: 1.45; color: var(--muted); margin-top: 2px; }
+.now-bar { display: block; height: 3px; border-radius: 2px; background: var(--rule); margin: 5px 0 3px; overflow: hidden; }
+.now-bar i { display: block; height: 100%; background: var(--accent); }
+@media (min-width: 1240px) { .layout.three .rail { position: static; } }

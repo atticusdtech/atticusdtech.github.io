@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Regenerate data/ops.json, the rail on the site.
 
-Publishes two things from SolarWinds Service Desk: my open changes and the
-knowledge-base solutions I've written. Titles are redacted, then Claude
-rewrites them into short public-safe wording. ops.js renders the JSON on
-every page. Nothing about incidents or open ticket counts is published. Rewritten titles
+Publishes from SolarWinds Service Desk: incidents I resolved on the latest
+working day, problems I resolved recently, my changes (in flight and recently
+done), my releases, and knowledge-base solutions I've written. Open incidents
+and open problems are never published, not even as counts. Text is redacted,
+then Claude rewrites it into short public-safe wording. Rewritten titles
 are cached in the JSON by record and a hash of the source title, so a record
 keeps the same public wording until its real title changes.
 
@@ -33,6 +34,7 @@ MY_GROUP_ID = 16556132  # my personal assignee group in Service Desk
 MY_USER_ID = 15057749   # my user record (solution author)
 MODEL = "claude-haiku-5-5"
 MAX_ITEMS = 5
+DONE_WINDOW = 14   # days a resolved problem or completed change stays up
 OPS_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "ops.json")
 
 # --- redaction, applied before anything leaves this machine for Claude ---
@@ -118,6 +120,15 @@ def change_state(c, now):
     return "planned"
 
 
+def problem_resolved(p):
+    return (p.get("state") or "").lower() in ("closed", "resolved")
+
+
+def release_done(r):
+    s = (r.get("state") or "").lower()
+    return "closed" in s or "completed" in s
+
+
 # --- Claude rewrites -------------------------------------------------------
 
 TITLE_PROMPT = """You shorten an internal IT record title for a school IT \
@@ -166,28 +177,100 @@ def public_title(client, cache, kind, rec):
     return title
 
 
+INCIDENT_PROMPT = """You turn a school IT administrator's resolved help-desk incident \
+into one changelog-style bullet for their public portfolio site, first person, past \
+tense, plain language.
+
+Style:
+  headline: "Fixed a teacher's printing remotely"
+  detail: "Their screenshot pointed to a bad printer setup, so I connected to the \
+laptop and rebuilt it without a visit."
+
+Rules:
+- Only use facts in the notes. If the notes are too thin to say what was actually \
+done, reply {"headline": null}.
+- Never include a person's name, room, building, identifiers, email, phone, the \
+school's name, or security specifics.
+- Anything about students' health, discipline, grades or records: {"headline": null}.
+- headline: 3-7 words, no trailing period. detail: one or two sentences.
+
+Reply with ONLY a JSON object: {"headline": "...", "detail": "..."}"""
+
+
+def incident_bullet(client, t):
+    category = (t.get("category") or {}).get("name", "")
+    notes = redact(t.get("resolution_description") or t.get("description") or "")[:1500]
+    out = ask(client, INCIDENT_PROMPT, f"Category: {category}\nResolution notes: {notes}")
+    head, detail = (out.get("headline") or "").strip(), (out.get("detail") or "").strip()
+    return {"headline": head, "detail": detail} if head and detail else None
+
+
 def fetch():
+    incidents = sd_all("incidents.json", {"assigned_to[]": MY_GROUP_ID, "state[]": "Resolved",
+                                          "sort_by": "updated_at", "sort_order": "DESC"}, max_pages=1)
+    problems = [p for p in sd_all("problems.json") if mine(p)]
     changes = [c for c in sd_all("changes.json") if mine(c)]
+    releases = [r for r in sd_all("releases.json") if mine(r)]
     solutions = [
         s for s in sd_all("solutions.json", {"sort_by": "created_at", "sort_order": "DESC"}, max_pages=3)
         if (s.get("requester") or {}).get("id") == MY_USER_ID and (s.get("state") or "").lower() == "approved"
     ]
-    return changes, solutions
+    return incidents, problems, changes, releases, solutions
 
 
-def build(client, cache, now, changes, solutions):
-    out_c = []
+def build(client, cache, now, incidents, problems, changes, releases, solutions):
+    cutoff = now.date() - timedelta(days=DONE_WINDOW)
+    recent = lambda rec: (local(rec.get("updated_at")) or now).date() >= cutoff
+
+    # incidents: the latest day I resolved anything
+    inc = [(local(t["updated_at"]).date(), t) for t in incidents if t.get("updated_at")]
+    last_day = max((d for d, _ in inc), default=None)
+    log = []
+    for d, t in inc:
+        if d != last_day or len(log) >= 4:
+            continue
+        b = incident_bullet(client, t)
+        if b:
+            log.append(b)
+
+    out_p = []
+    for p in problems:
+        if not problem_resolved(p) or not recent(p):
+            continue
+        title = public_title(client, cache, "problem", p)
+        if title:
+            out_p.append({"title": title, "incidents": len(ids(p, "incidents")),
+                          "date": local(p["updated_at"]).date().isoformat()})
+    out_p.sort(key=lambda x: x["date"], reverse=True)
+
+    out_c, change_state_by_id = [], {}
     for c in changes:
         state = change_state(c, now)
-        if state not in ("planned", "scheduled", "in_progress"):
+        change_state_by_id[c["id"]] = state
+        if state in ("cancelled", "rolled_back") or (state == "completed" and not recent(c)):
             continue
         title = public_title(client, cache, "change", c)
         if not title:
             continue
         start = local(c.get("planned_start_at"))
-        out_c.append({"title": title, "state": state, "start": start.date().isoformat() if start else None})
-    rank = {"in_progress": 0, "scheduled": 1, "planned": 2}
-    out_c.sort(key=lambda x: (rank[x["state"]], x["start"] or ""))
+        out_c.append({"title": title, "state": state,
+                      "start": start.date().isoformat() if start else None,
+                      "date": local(c["updated_at"]).date().isoformat() if state == "completed" else None})
+    rank = {"in_progress": 0, "scheduled": 1, "planned": 2, "completed": 3}
+    out_c.sort(key=lambda x: (rank[x["state"]], "" if x["state"] != "completed" else "~" + x["date"]))
+
+    out_r = []
+    for r in releases:
+        done = release_done(r)
+        if done and not recent(r):
+            continue
+        title = public_title(client, cache, "release", r)
+        if not title:
+            continue
+        linked = ids(r, "changes")
+        out_r.append({"title": title, "done": done,
+                      "changes_done": sum(change_state_by_id.get(i) == "completed" for i in linked),
+                      "changes_total": len(linked)})
 
     out_s = []
     for s in solutions[:MAX_ITEMS]:
@@ -197,8 +280,10 @@ def build(client, cache, now, changes, solutions):
 
     return {
         "updated": now.isoformat(timespec="minutes"),
-        "changes": out_c[:MAX_ITEMS],
-        "changes_total": len(out_c),
+        "incidents": {"date": last_day.isoformat() if last_day else None, "log": log},
+        "problems": out_p[:MAX_ITEMS],
+        "changes": out_c[:MAX_ITEMS + 2],
+        "releases": out_r,
         "solutions": out_s,
         "_titles": cache,
     }
@@ -206,11 +291,13 @@ def build(client, cache, now, changes, solutions):
 
 def main():
     now = datetime.now(SCHOOL_TZ)
-    changes, solutions = fetch()
+    incidents, problems, changes, releases, solutions = fetch()
 
     if "--dry-run" in sys.argv:
-        print(f"open changes: {sum(change_state(c, now) in ('planned','scheduled','in_progress') for c in changes)}")
-        print(f"my solutions: {len(solutions)}")
+        print(f"resolved incidents fetched: {len(incidents)}")
+        print(f"resolved problems: {sum(problem_resolved(p) for p in problems)}")
+        print(f"changes: {[change_state(c, now) for c in changes]}")
+        print(f"releases: {len(releases)}  solutions: {len(solutions)}")
         return
 
     try:
@@ -221,7 +308,7 @@ def main():
 
     import anthropic
     client = anthropic.Anthropic()
-    data = build(client, prev.get("_titles", {}), now, changes, solutions)
+    data = build(client, prev.get("_titles", {}), now, incidents, problems, changes, releases, solutions)
 
     strip = lambda d: {k: v for k, v in d.items() if k not in ("updated", "_titles")}
     changed = strip(data) != strip(prev)
