@@ -10,7 +10,6 @@ on:
 
 permissions:
   contents: write
-  pull-requests: write
   id-token: write
 
 jobs:
@@ -45,19 +44,11 @@ jobs:
           ANTHROPIC_SERVICE_ACCOUNT_ID: svac_017FmquwmUgZ7WrYcZf5xPW3
         run: python scripts/sync_ops.py
 
-      - name: Open PR with today's update
+      - name: Commit to main
         if: steps.sync.outputs.changed == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
           git config user.name "atticusdtech"
           git config user.email "43195508+afd998@users.noreply.github.com"
-          branch="ops-sync-$(date -u +%Y%m%d-%H%M)"
-          git checkout -b "$branch"
           git add data/ops.json
           git commit -m "Ops: ${{ steps.sync.outputs.count }} incident(s) resolved ($(date -u +%Y-%m-%d))"
-          git push origin "$branch"
-          gh pr create \
-            --title "Operations update: $(date -u +%Y-%m-%d)" \
-            --body "Auto-generated from today's incidents, problems, changes and releases, summarized and scrubbed of anything school- or person-identifying. Review before merging." \
-            --base main --head "$branch"
+          git push origin HEAD:main
