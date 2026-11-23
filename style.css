@@ -193,3 +193,4 @@ table.data td.num, table.data th.num { text-align: right; font-family: var(--mon
 .m-jamf { fill: currentColor; }
 .m-pc { fill: #5aa832; font-size: 18px; }
 @media (prefers-reduced-motion: reduce) { .hub-flow, .hub-halo { animation: none; } .hub-flow { display: none; } }
+.hub-core-pill { fill: var(--bg); stroke: var(--rule); }
