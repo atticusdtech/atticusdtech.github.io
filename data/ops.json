@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-23T11:32-06:00",
+ "updated": "2026-11-24T00:15-06:00",
  "incidents": {
   "date": "2026-11-23",
   "log": [
@@ -111,7 +111,7 @@
   {
    "id": "CHG-6",
    "title": "Allow app updates to finish while open",
-   "state": "in_progress",
+   "state": "planned",
    "fixes": [],
    "releases": [],
    "incidents": 4,
