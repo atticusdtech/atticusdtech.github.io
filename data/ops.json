@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-24T00:15-06:00",
+ "updated": "2026-11-25T22:16-06:00",
  "incidents": {
   "date": "2026-11-23",
   "log": [
@@ -85,8 +85,8 @@
    "date": null
   },
   {
-   "id": "CHG-8",
-   "title": "Remove old local accounts from loaner devices",
+   "id": "CHG-7",
+   "title": "Upgrade six substitute loaner Macs to macOS 27",
    "state": "in_progress",
    "fixes": [],
    "releases": [
@@ -97,9 +97,9 @@
    "date": null
   },
   {
-   "id": "CHG-7",
-   "title": "Upgrade six substitute loaner Macs to macOS 27",
-   "state": "in_progress",
+   "id": "CHG-8",
+   "title": "Remove old local accounts from loaner devices",
+   "state": "planned",
    "fixes": [],
    "releases": [
     "REL-2"
@@ -343,6 +343,9 @@
     "headline": "Swapped a student's broken Chromebook hinge",
     "detail": "A student's Chromebook had a hinge that was coming fully off, so I issued a loaner while it was with IT. When the loaner came back in good condition, I gave the student a spare device to keep."
    }
+  },
+  "incident:43319": {
+   "b": null
   }
  }
 }
